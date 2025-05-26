@@ -16,7 +16,7 @@ This project aims to help users classify waste efficiently using machine learnin
 
 - Python
 - TensorFlow/Keras
-- Flask/Django (choose one)
+- Flask
 - HTML/CSS/JavaScript
 
 ## Getting Started
