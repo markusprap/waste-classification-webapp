@@ -18,6 +18,8 @@ This project aims to help users classify waste efficiently using machine learnin
 - TensorFlow/Keras
 - Flask
 - HTML/CSS/JavaScript
+- Reactjs
+- NodeJs & ExpressJs
 
 ## Getting Started
 
