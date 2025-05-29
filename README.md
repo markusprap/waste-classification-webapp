@@ -14,21 +14,30 @@ This project aims to help users classify waste efficiently using machine learnin
 
 ## Technologies Used
 
-- Python
-- TensorFlow/Keras
-- Flask
-- HTML/CSS/JavaScript
-- Reactjs
-- NodeJs & ExpressJs
+- Python (Flask, TensorFlow/Keras)
+- JavaScript (React.js, Next.js, Tailwind CSS)
+- Node.js & Express.js
 
 ## Getting Started
 
-1. Clone the repository.
-2. Install dependencies:  
+### Frontend (React + Vite)
+
+1. Install dependencies:
+    ```bash
+    npm install
+    ```
+2. Run the development server:
+    ```bash
+    npm run dev
+    ```
+
+### Backend (Flask)
+
+1. Install dependencies:
     ```bash
     pip install -r requirements.txt
     ```
-3. Run the application:  
+2. Run the Flask app:
     ```bash
     python app.py
     ```
