@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useLanguage } from "@/context/language-context"
+import { Navigation, ExternalLink } from "lucide-react"
+import wastebanks from "./wastebanks.json"
 
-// Fungsi hitung jarak dua koordinat (km)
 function calculateDistance(lat1, lng1, lat2, lng2) {
   const R = 6371
   const dLat = (lat2 - lat1) * (Math.PI / 180)
@@ -15,112 +16,97 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   return R * c
 }
 
+function extractCity(address) {
+  if (!address) return ""
+  
+  const cityPatterns = [
+    /Kota\s+([^,]+)/i,
+    /Kab\.\s*([^,]+)/i,
+    /Kabupaten\s+([^,]+)/i,
+    /,\s*([^,]+),\s*[^,]+$/i
+  ]
+  
+  for (const pattern of cityPatterns) {
+    const match = address.match(pattern)
+    if (match) {
+      return match[1].trim()
+    }
+  }
+  
+  const parts = address.split(',')
+  if (parts.length >= 2) {
+    return parts[parts.length - 2].trim()
+  }
+  
+  return ""
+}
+
 export function InteractiveMap({ userLocation, onLocationUpdate }) {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const userMarkerRef = useRef(null)
+  const wasteMarkersRef = useRef([])
   const { language } = useLanguage()
   const [mapReady, setMapReady] = useState(false)
   const [wasteLocations, setWasteLocations] = useState([])
+  const [recommendedWasteBanks, setRecommendedWasteBanks] = useState([])
+  const [selectedLocation, setSelectedLocation] = useState(null)
+  const [userCity, setUserCity] = useState("")
 
-  // Fetch waste bank dari Nominatim jika userLocation tersedia
+  // Ambil data dari JSON dan mapping ke format yang dipakai map
   useEffect(() => {
-    async function fetchWasteBanks() {
-      if (!userLocation) {
-        setWasteLocations([
-          {
-            id: 1,
-            name: "Green Waste Center",
-            nameId: "Pusat Sampah Hijau",
-            lat: -6.2088,
-            lng: 106.8456,
-            address: "Jl. Sudirman No. 123, Jakarta Pusat",
-            type: "Recycling Center",
-          },
-          {
-            id: 2,
-            name: "EcoBank Kemang",
-            nameId: "EcoBank Kemang",
-            lat: -6.2615,
-            lng: 106.8106,
-            address: "Jl. Kemang Raya No. 45, Jakarta Selatan",
-            type: "Waste Bank",
-          },
-          {
-            id: 3,
-            name: "Clean City Hub",
-            nameId: "Hub Kota Bersih",
-            lat: -6.1751,
-            lng: 106.865,
-            address: "Jl. Menteng No. 67, Jakarta Pusat",
-            type: "Collection Point",
-          },
-          {
-            id: 4,
-            name: "Recycle Station Senayan",
-            nameId: "Stasiun Daur Ulang Senayan",
-            lat: -6.2297,
-            lng: 106.8075,
-            address: "Jl. Senayan No. 89, Jakarta Pusat",
-            type: "Recycling Station",
-          },
-          {
-            id: 5,
-            name: "Waste Management Kelapa Gading",
-            nameId: "Pengelolaan Sampah Kelapa Gading",
-            lat: -6.1588,
-            lng: 106.9056,
-            address: "Jl. Kelapa Gading No. 12, Jakarta Utara",
-            type: "Waste Bank",
-          },
-          {
-            id: 6,
-            name: "Eco Center Pondok Indah",
-            nameId: "Pusat Eco Pondok Indah",
-            lat: -6.2659,
-            lng: 106.7844,
-            address: "Jl. Pondok Indah No. 88, Jakarta Selatan",
-            type: "Collection Point",
-          },
-        ])
-        return
+    let mapped = wastebanks
+      .filter((d) => d.latitude && d.longitude)
+      .map((d, idx) => ({
+        id: idx + 1,
+        name: d.nama,
+        nameId: d.nama,
+        lat: d.latitude,
+        lng: d.longitude,
+        address: d.alamat,
+        type: "Bank Sampah",
+        city: extractCity(d.alamat)
+      }))
+
+    if (userLocation) {
+      // Hitung jarak untuk semua bank sampah
+      mapped = mapped.map((loc) => ({
+        ...loc,
+        distance: calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng),
+        distanceText: (() => {
+          const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng)
+          return dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`
+        })()
+      }))
+
+      // Untuk rekomendasi (radius 50km)
+      const recommended = mapped
+        .filter((loc) => loc.distance <= 50)
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 15)
+      
+      setRecommendedWasteBanks(recommended)
+      
+      if (recommended.length > 0) {
+        setUserCity(recommended[0].city)
       }
-      // Cari "bank sampah" dalam 10km dari userLocation
-      const query = language === "id" ? "bank sampah" : "waste bank"
-      // Perkiraan bounding box 10km
-      const delta = 0.09
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=50&viewbox=${
-        userLocation.lng - delta
-      },${userLocation.lat + delta},${userLocation.lng + delta},${userLocation.lat - delta}`
 
-      const res = await fetch(url, {
-        headers: { "Accept-Language": language === "id" ? "id" : "en" }
-      })
-      const data = await res.json()
-      // Filter hasil dalam radius 10km
-      const filtered = data
-        .map((item, idx) => ({
-          id: item.place_id || idx,
-          name: item.display_name.split(",")[0],
-          nameId: item.display_name.split(",")[0],
-          lat: parseFloat(item.lat),
-          lng: parseFloat(item.lon),
-          address: item.display_name,
-          type: "Waste Bank"
-        }))
-        .filter(
-          (loc) =>
-            calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng) <= 10
-        )
-      setWasteLocations(filtered)
+      // Untuk ditampilkan di map (radius 15km)
+      mapped = mapped
+        .filter((loc) => loc.distance <= 15)
+        .sort((a, b) => a.distance - b.distance)
+    } else {
+      // Jika tidak ada user location, tampilkan sample bank sampah
+      mapped = mapped.slice(0, 20)
+      setRecommendedWasteBanks(mapped.slice(0, 15))
     }
+    
+    setWasteLocations(mapped)
+  }, [userLocation])
 
-    fetchWasteBanks()
-  }, [userLocation, language])
-
+  // Initialize map
   useEffect(() => {
     if (typeof window !== "undefined" && mapRef.current && !mapInstanceRef.current) {
-      // Load Leaflet CSS dynamically
       const link = document.createElement("link")
       link.rel = "stylesheet"
       link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -139,7 +125,7 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
 
           const map = L.map(mapRef.current).setView(
             userLocation ? [userLocation.lat, userLocation.lng] : [-6.2088, 106.8456],
-            userLocation ? 13 : 11
+            userLocation ? 12 : 5
           )
 
           L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -148,11 +134,6 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
 
           mapInstanceRef.current = map
           setMapReady(true)
-
-          // Add user marker jika ada
-          if (userLocation) {
-            addUserLocationMarker(L, map, userLocation)
-          }
         })
       }
 
@@ -160,15 +141,16 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
         if (mapInstanceRef.current) {
           mapInstanceRef.current.remove()
           mapInstanceRef.current = null
+          setMapReady(false)
         }
         if (document.head.contains(link)) {
           document.head.removeChild(link)
         }
       }
     }
-  }, [language, userLocation])
+  }, [])
 
-  // Tambahkan marker user
+  // Add user location marker
   const addUserLocationMarker = (L, map, location) => {
     if (userMarkerRef.current) {
       map.removeLayer(userMarkerRef.current)
@@ -193,20 +175,40 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
       </div>
     `
     userMarkerRef.current.bindPopup(popupContent)
-    map.setView([location.lat, location.lng], 13)
   }
 
-  // Render ulang marker waste bank jika data berubah
+  // Function to open Google Maps
+  const openInGoogleMaps = (location) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}&travelmode=driving`
+    window.open(url, '_blank')
+  }
+
+  // Function to highlight marker on map
+  const highlightLocationOnMap = (location) => {
+    if (mapInstanceRef.current && mapReady) {
+      // Set view ke lokasi yang dipilih
+      mapInstanceRef.current.setView([location.lat, location.lng], 15)
+      
+      // Buka popup marker jika ada
+      wasteMarkersRef.current.forEach(marker => {
+        if (marker.getLatLng().lat === location.lat && marker.getLatLng().lng === location.lng) {
+          marker.openPopup()
+        }
+      })
+    }
+  }
+
+  // Add waste bank markers
   useEffect(() => {
     if (mapReady && mapInstanceRef.current) {
       import("leaflet").then((L) => {
-        // Hapus marker waste lama
-        mapInstanceRef.current.eachLayer((layer) => {
-          if (layer.options && layer.options.icon && layer.options.icon.options.className === "custom-div-icon") {
-            mapInstanceRef.current.removeLayer(layer)
-          }
+        // Remove existing waste bank markers
+        wasteMarkersRef.current.forEach(marker => {
+          mapInstanceRef.current.removeLayer(marker)
         })
-        // Custom icon for waste locations
+        wasteMarkersRef.current = []
+
+        // Add waste bank markers
         const wasteIcon = L.divIcon({
           html: `<div style="background-color: #10b981; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center;">
                    <svg width="12" height="12" fill="white" viewBox="0 0 24 24">
@@ -217,19 +219,34 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
           iconSize: [24, 24],
           iconAnchor: [12, 12],
         })
+
         wasteLocations.forEach((location) => {
           const marker = L.marker([location.lat, location.lng], { icon: wasteIcon }).addTo(mapInstanceRef.current)
+          wasteMarkersRef.current.push(marker)
+          
           const popupContent = `
             <div style="min-width: 200px;">
               <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">
-                ${language === "id" ? location.nameId : location.name}
+                ${location.name}
               </h3>
               <p style="margin: 0 0 4px 0; color: #6b7280; font-size: 14px;">
                 ${location.address}
               </p>
-              <p style="margin: 0; color: #10b981; font-size: 12px; font-weight: 500;">
+              <p style="margin: 0 0 4px 0; color: #10b981; font-size: 12px; font-weight: 500;">
                 ${location.type}
               </p>
+              ${location.distance ? `<p style="margin: 0 0 8px 0; color: #f59e0b; font-size: 12px; font-weight: 500;">
+                ${language === "id" ? "Jarak" : "Distance"}: ${location.distance.toFixed(2)} km
+              </p>` : ''}
+              <button 
+                onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}&travelmode=driving', '_blank')"
+                style="background-color: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;"
+              >
+                <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z"/>
+                </svg>
+                ${language === "id" ? "Buka di Maps" : "Open in Maps"}
+              </button>
             </div>
           `
           marker.bindPopup(popupContent)
@@ -238,7 +255,7 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
     }
   }, [wasteLocations, mapReady, language])
 
-  // Update user marker jika lokasi berubah
+  // Handle user location updates
   useEffect(() => {
     if (mapReady && mapInstanceRef.current && userLocation) {
       import("leaflet").then((L) => {
@@ -248,26 +265,129 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
   }, [userLocation, mapReady, language])
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <div ref={mapRef} className="h-[400px] w-full" style={{ minHeight: "400px" }} />
-      </div>
-      {/* Map Legend */}
-      <div className="mt-4 rounded-lg bg-white border border-gray-200 p-4">
-        <h4 className="font-medium text-gray-900 mb-2">{language === "id" ? "Legenda" : "Legend"}</h4>
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow"></div>
-            <span className="text-sm text-gray-600">
-              {language === "id" ? "Lokasi Bank Sampah" : "Waste Bank Locations"}
-            </span>
+    <div className="mx-auto max-w-7xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Map Section */}
+        <div className="lg:col-span-2">
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div ref={mapRef} className="h-[500px] w-full" style={{ minHeight: "500px" }} />
           </div>
-          {userLocation && (
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow"></div>
-              <span className="text-sm text-gray-600">{language === "id" ? "Lokasi Anda" : "Your Location"}</span>
+          
+          {/* Legend */}
+          <div className="mt-4 rounded-lg bg-white border border-gray-200 p-4">
+            <h4 className="font-medium text-gray-900 mb-2">
+              {language === "id" ? "Legenda" : "Legend"}
+            </h4>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow"></div>
+                <span className="text-sm text-gray-600">
+                  {language === "id" ? "Lokasi Bank Sampah" : "Waste Bank Locations"}
+                </span>
+              </div>
+              {userLocation && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow"></div>
+                  <span className="text-sm text-gray-600">
+                    {language === "id" ? "Lokasi Anda" : "Your Location"}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+            {wasteLocations.length > 0 && (
+              <div className="mt-2 text-sm text-gray-500">
+                {language === "id" 
+                  ? `Menampilkan ${wasteLocations.length} bank sampah ${userLocation ? 'dalam radius 15km' : 'terdekat'}`
+                  : `Showing ${wasteLocations.length} waste banks ${userLocation ? 'within 15km radius' : 'nearby'}`
+                }
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recommendations Section */}
+        <div className="lg:col-span-1">
+          <div className="rounded-lg bg-white border border-gray-200 p-4 h-[544px] flex flex-col">
+            <div className="mb-4">
+              <h4 className="font-medium text-gray-900">
+                {language === "id" 
+                  ? `Rekomendasi Bank Sampah${userCity ? ` di ${userCity}` : ""}`
+                  : `Waste Bank Recommendations${userCity ? ` in ${userCity}` : ""}`
+                }
+              </h4>
+              <p className="text-sm text-gray-500 mt-1">
+                {language === "id" 
+                  ? `${recommendedWasteBanks.length} bank sampah ${userLocation ? 'dalam radius 50km' : 'ditemukan'}`
+                  : `${recommendedWasteBanks.length} waste banks ${userLocation ? 'within 50km radius' : 'found'}`
+                }
+              </p>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-3">
+              {recommendedWasteBanks.length > 0 ? (
+                recommendedWasteBanks.map((bank, index) => (
+                  <div 
+                    key={bank.id}
+                    className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
+                      selectedLocation === bank.id 
+                        ? "border-green-500 bg-green-50 shadow-md" 
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                    onClick={() => {
+                      setSelectedLocation(selectedLocation === bank.id ? null : bank.id)
+                      highlightLocationOnMap(bank)
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h5 className="font-medium text-sm text-gray-900 leading-tight flex-1 pr-2">
+                        {index + 1}. {bank.name}
+                      </h5>
+                      {bank.distanceText && (
+                        <div className="flex items-center space-x-1 text-sm font-medium text-orange-600 shrink-0">
+                          <Navigation className="w-3 h-3" />
+                          <span>{bank.distanceText}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">{bank.address}</p>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded-full">
+                        {bank.type}
+                      </span>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openInGoogleMaps(bank)
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        {language === "id" ? "Buka Maps" : "Open Maps"}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <Navigation className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <h5 className="font-medium text-gray-900 mb-2">
+                    {language === "id" ? "Tidak Ada Bank Sampah" : "No Waste Banks Found"}
+                  </h5>
+                  <p className="text-sm text-gray-500">
+                    {language === "id" 
+                      ? "Tidak ada bank sampah yang ditemukan di area ini"
+                      : "No waste banks found in this area"
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

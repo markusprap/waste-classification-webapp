@@ -3,13 +3,11 @@
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/context/language-context"
 import { InteractiveMap } from "../shared/interactive-map"
-import { SimpleMap } from "../shared/simple-map"
 import { MapPin } from "lucide-react"
 import { useState } from "react"
 
 export function MapSection() {
   const { t } = useLanguage()
-  const [useSimpleMap, setUseSimpleMap] = useState(false)
   const [userLocation, setUserLocation] = useState(null)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
 
@@ -46,7 +44,6 @@ export function MapSection() {
           }
 
           alert(errorMessage)
-          setUseSimpleMap(true)
         },
         {
           enableHighAccuracy: true,
@@ -56,7 +53,6 @@ export function MapSection() {
       )
     } else {
       alert("Geolocation is not supported by this browser")
-      setUseSimpleMap(true)
     }
   }
 
@@ -65,33 +61,7 @@ export function MapSection() {
       <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16 relative z-10">
         <h2 className="mb-16 text-center text-3xl font-bold">{t("map.title")}</h2>
 
-        {/* Map Toggle */}
-        <div className="mb-6 flex justify-center">
-          <div className="bg-white rounded-lg p-1 border border-gray-200">
-            <button
-              onClick={() => setUseSimpleMap(false)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                !useSimpleMap ? "bg-black text-white" : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Interactive Map
-            </button>
-            <button
-              onClick={() => setUseSimpleMap(true)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                useSimpleMap ? "bg-black text-white" : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Simple View
-            </button>
-          </div>
-        </div>
-
-        {useSimpleMap ? (
-          <SimpleMap userLocation={userLocation} />
-        ) : (
-          <InteractiveMap userLocation={userLocation} onLocationUpdate={setUserLocation} />
-        )}
+        <InteractiveMap userLocation={userLocation} onLocationUpdate={setUserLocation} />
 
         <div className="mt-8 flex justify-center">
           <Button

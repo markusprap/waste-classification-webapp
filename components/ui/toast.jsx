@@ -93,6 +93,10 @@ const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
 ))
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
+// Tambahkan type definitions dan exports yang hilang
+const ToastProps = {}
+const ToastActionElement = React.createElement(ToastAction)
+
 export {
   ToastProvider,
   ToastViewport,
@@ -101,4 +105,6 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
+  ToastProps,
+  ToastActionElement,
 }

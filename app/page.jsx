@@ -5,6 +5,7 @@ import { ClassificationSection } from "@/components/home/classification-section"
 import { MapSection } from "@/components/home/map-section"
 import { TechnologiesSection } from "@/components/home/technologies-section"
 import { Footer } from "@/components/common/footer"
+import { ScrollToTop } from "@/components/common/scroll-to-top"
 
 export default function Home() {
   return (
@@ -16,6 +17,7 @@ export default function Home() {
         <ClassificationSection />
         <MapSection />
         <TechnologiesSection />
+        <ScrollToTop />
       </main>
       <Footer />
     </div>

@@ -8,6 +8,7 @@ import { ClassifyUploadSection } from "./classify-upload-section"
 import { WasteManagementMethods } from "./waste-management-methods"
 import { MapSection } from "@/components/home/map-section"
 import { useLanguage } from "@/context/language-context"
+import { ScrollToTop } from "@/components/common/scroll-to-top"
 
 export function ClassifyPageContent() {
   const { language } = useLanguage()
@@ -83,6 +84,8 @@ export function ClassifyPageContent() {
 
         {/* Map Section */}
         <MapSection initialUserLocation={initialData.parsedLocation} onLocationUpdate={setUserLocation} />
+      
+        <ScrollToTop />
       </main>
       <Footer />
     </div>
