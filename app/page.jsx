@@ -7,6 +7,9 @@ import { TechnologiesSection } from "@/components/home/technologies-section"
 import { Footer } from "@/components/common/footer"
 import { ScrollToTop } from "@/components/common/scroll-to-top"
 
+// Disable static optimization for this page because it uses auth context
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">

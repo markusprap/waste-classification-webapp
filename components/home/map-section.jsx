@@ -1,15 +1,55 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog"
 import { useLanguage } from "@/context/language-context"
 import { InteractiveMap } from "../shared/interactive-map"
-import { MapPin } from "lucide-react"
-import { useState } from "react"
+import { MapPin, CheckCircle, AlertTriangle } from "lucide-react"
+import { useState, useEffect } from "react"
 
-export function MapSection() {
+export function MapSection({ initialUserLocation, onLocationUpdate }) {
   const { t } = useLanguage()
   const [userLocation, setUserLocation] = useState(null)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [showErrorDialog, setShowErrorDialog] = useState(false)
+  const [locationData, setLocationData] = useState(null)
+  const [errorMessage, setErrorMessage] = useState("")
+
+  // Load saved location on mount
+  useEffect(() => {
+    // Check for initial location passed from parent
+    if (initialUserLocation) {
+      setUserLocation(initialUserLocation)
+      if (onLocationUpdate) {
+        onLocationUpdate(initialUserLocation)
+      }
+      return
+    }
+
+    // Check session storage for saved location
+    try {
+      const savedLocation = sessionStorage.getItem('userLocation')
+      if (savedLocation) {
+        const parsedLocation = JSON.parse(savedLocation)
+        console.log('📍 Loading saved user location:', parsedLocation)
+        setUserLocation(parsedLocation)
+        if (onLocationUpdate) {
+          onLocationUpdate(parsedLocation)
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error loading saved location:', error)
+    }
+  }, [initialUserLocation, onLocationUpdate])
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -21,29 +61,42 @@ export function MapSection() {
           const location = { lat: latitude, lng: longitude }
 
           setUserLocation(location)
+          if (onLocationUpdate) {
+            onLocationUpdate(location)
+          }
+
+          // Save location to session storage
+          try {
+            sessionStorage.setItem('userLocation', JSON.stringify(location))
+            console.log('💾 User location saved to session storage')
+          } catch (error) {
+            console.error('❌ Error saving location to session storage:', error)
+          }
+
           setIsGettingLocation(false)
 
-          alert(
-            `${t("map.getLocation")} berhasil!\nLatitude: ${latitude.toFixed(6)}\nLongitude: ${longitude.toFixed(6)}`,
-          )
+          // Store location data for dialog
+          setLocationData({ latitude, longitude })
+          setShowSuccessDialog(true)
         },
         (error) => {
           setIsGettingLocation(false)
 
-          let errorMessage = "Unable to retrieve your location"
+          let errorKey = "map.dialog.error.unavailable"
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = "Location access denied by user"
+              errorKey = "map.dialog.error.permission"
               break
             case error.POSITION_UNAVAILABLE:
-              errorMessage = "Location information is unavailable"
+              errorKey = "map.dialog.error.unavailable"
               break
             case error.TIMEOUT:
-              errorMessage = "Location request timed out"
+              errorKey = "map.dialog.error.timeout"
               break
           }
 
-          alert(errorMessage)
+          setErrorMessage(t(errorKey))
+          setShowErrorDialog(true)
         },
         {
           enableHighAccuracy: true,
@@ -52,7 +105,8 @@ export function MapSection() {
         },
       )
     } else {
-      alert("Geolocation is not supported by this browser")
+      setErrorMessage(t("map.dialog.error.unsupported"))
+      setShowErrorDialog(true)
     }
   }
 
@@ -64,19 +118,114 @@ export function MapSection() {
         <InteractiveMap userLocation={userLocation} onLocationUpdate={setUserLocation} />
 
         <div className="mt-8 flex justify-center">
-          <Button
-            onClick={getCurrentLocation}
-            disabled={isGettingLocation}
-            className="bg-black text-white hover:bg-gray-800 flex items-center gap-2 disabled:opacity-50"
-          >
-            <MapPin className="h-4 w-4" />
-            {isGettingLocation
-              ? t("map.getLocation") === "Get location"
-                ? "Getting location..."
-                : "Mendapatkan lokasi..."
-              : t("map.getLocation")}
-          </Button>
+          {!userLocation ? (
+            <Button
+              onClick={getCurrentLocation}
+              disabled={isGettingLocation}
+              className="bg-black text-white hover:bg-gray-800 flex items-center gap-2 disabled:opacity-50"
+            >
+              <MapPin className="h-4 w-4" />
+              {isGettingLocation
+                ? t("map.getLocation") === "Get location"
+                  ? "Getting location..."
+                  : "Mendapatkan lokasi..."
+                : t("map.getLocation")}
+            </Button>
+          ) : (
+            <div className="flex gap-3">
+              <Button
+                onClick={getCurrentLocation}
+                disabled={isGettingLocation}
+                variant="outline"
+                className="flex items-center gap-2 disabled:opacity-50"
+              >
+                <MapPin className="h-4 w-4" />
+                {isGettingLocation ? t("map.updatingLocation") : t("map.updateLocation")}
+              </Button>
+              <Button
+                onClick={() => {
+                  setUserLocation(null)
+                  if (onLocationUpdate) {
+                    onLocationUpdate(null)
+                  }
+                  sessionStorage.removeItem('userLocation')
+                }}
+                variant="outline"
+                className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                {t("map.clearLocation")}
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* Success Dialog */}
+        <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+          <AlertDialogContent className="sm:max-w-md">
+            <AlertDialogHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+              </div>
+              <AlertDialogTitle className="text-xl font-bold text-gray-900">
+                {t("map.dialog.success.title")}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-600 mt-2">
+                {t("map.dialog.success.description")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            
+            {locationData && (
+              <div className="bg-gray-50 rounded-lg p-4 my-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  {t("map.dialog.success.coordinates")}
+                </p>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p>📍 Latitude: {locationData.latitude.toFixed(6)}</p>
+                  <p>📍 Longitude: {locationData.longitude.toFixed(6)}</p>
+                </div>
+              </div>
+            )}
+
+            <AlertDialogFooter>
+              <AlertDialogAction 
+                onClick={() => setShowSuccessDialog(false)}
+                className="w-full bg-black hover:bg-gray-800"
+              >
+                {t("map.dialog.success.button")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Error Dialog */}
+        <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+          <AlertDialogContent className="sm:max-w-md">
+            <AlertDialogHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-8 h-8 text-red-600" />
+                </div>
+              </div>
+              <AlertDialogTitle className="text-xl font-bold text-gray-900">
+                {t("map.dialog.error.title")}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-600 mt-2">
+                {errorMessage}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <AlertDialogFooter>
+              <AlertDialogAction 
+                onClick={() => setShowErrorDialog(false)}
+                className="w-full bg-black hover:bg-gray-800"
+              >
+                {t("map.dialog.error.button")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </section>
   )

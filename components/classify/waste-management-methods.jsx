@@ -43,21 +43,29 @@ const methods = [
 ]
 
 export function WasteManagementMethods({ classificationData }) {
-  const { language } = useLanguage()
+  const { t, language } = useLanguage()
 
   return (
-    <section className="bg-white py-16 md:py-20" data-section="waste-methods">
+    <section className="bg-gradient-to-br from-gray-50 to-gray-100 py-16 md:py-20" data-section="waste-methods">
       <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
         <div className="text-center mb-12">
+          <div className="mb-4 inline-flex items-center rounded-full bg-green-100 px-6 py-3 text-sm font-medium text-green-700">
+            ♻️ Sustainable Solutions
+          </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            {language === "id" ? "Metode Pengelolaan Sampah" : "Waste Management Methods"}
+            {t("classify.methods.title")}
           </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
+            {t("classify.methods.subtitle")}
+          </p>
           {classificationData && (
-            <p className="text-lg text-gray-600">
-              {language === "id"
-                ? `Rekomendasi untuk ${classificationData.typeId || classificationData.type}: ${classificationData.method === "recycle" ? "Daur Ulang" : classificationData.method === "compost" ? "Kompos" : classificationData.method === "reduce" ? "Kurangi" : "Gunakan Kembali"}`
-                : `Recommended for ${classificationData.type}: ${classificationData.method.charAt(0).toUpperCase() + classificationData.method.slice(1)}`}
-            </p>
+            <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-lg p-4 max-w-xl mx-auto">
+              <p className="text-teal-800 font-medium">
+                {language === "id"
+                  ? `💡 Rekomendasi untuk ${classificationData.typeId || classificationData.type}: ${classificationData.method === "recycle" ? "Daur Ulang" : classificationData.method === "compost" ? "Kompos" : classificationData.method === "reduce" ? "Kurangi" : "Gunakan Kembali"}`
+                  : `💡 AI Recommendation for ${classificationData.type}: ${classificationData.method.charAt(0).toUpperCase() + classificationData.method.slice(1)}`}
+              </p>
+            </div>
           )}
         </div>
 
@@ -69,28 +77,30 @@ export function WasteManagementMethods({ classificationData }) {
             return (
               <div
                 key={method.id}
-                className={`text-center p-6 rounded-lg transition-all duration-200 ${
+                className={`text-center p-6 rounded-xl transition-all duration-300 ${
                   isRecommended
-                    ? "bg-teal-50 border-2 border-teal-500 shadow-lg transform scale-105"
-                    : "bg-gray-50 border border-gray-200 hover:shadow-md hover:scale-102"
+                    ? "bg-gradient-to-br from-teal-50 to-emerald-50 border-2 border-teal-400 shadow-xl transform scale-105 relative overflow-hidden"
+                    : "bg-white border border-gray-200 hover:shadow-lg hover:scale-102 hover:border-gray-300"
                 }`}
               >
+                {/* Recommended badge */}
+                {isRecommended && (
+                  <div className="absolute top-0 right-0 bg-gradient-to-r from-teal-500 to-emerald-500 text-white px-3 py-1 rounded-bl-lg text-xs font-bold">
+                    {t("classify.methods.recommended")}
+                  </div>
+                )}
+                
                 <div
-                  className={`w-16 h-16 rounded-full ${method.color} flex items-center justify-center mx-auto mb-4 ${
-                    isRecommended ? "ring-4 ring-teal-200" : ""
+                  className={`w-16 h-16 rounded-full ${method.color} flex items-center justify-center mx-auto mb-4 transition-all duration-300 ${
+                    isRecommended ? "ring-4 ring-teal-200 scale-110" : "hover:scale-105"
                   }`}
                 >
                   <Icon className="h-8 w-8" />
                 </div>
                 <h3 className={`text-xl font-bold mb-2 ${isRecommended ? "text-teal-900" : "text-gray-900"}`}>
                   {language === "id" ? method.titleId : method.title}
-                  {isRecommended && (
-                    <span className="ml-2 text-sm bg-teal-500 text-white px-2 py-1 rounded-full">
-                      {language === "id" ? "Direkomendasikan" : "Recommended"}
-                    </span>
-                  )}
                 </h3>
-                <p className={`text-sm ${isRecommended ? "text-teal-700" : "text-gray-600"}`}>
+                <p className={`text-sm leading-relaxed ${isRecommended ? "text-teal-700" : "text-gray-600"}`}>
                   {language === "id" ? method.descriptionId : method.description}
                 </p>
               </div>

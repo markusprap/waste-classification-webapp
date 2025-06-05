@@ -2,7 +2,7 @@
 
 import { Check, ChevronDown, Globe } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu.jsx"
-import { Button } from "@/components/ui/button.jsx"
+import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/context/language-context"
 import { useState } from "react"
 

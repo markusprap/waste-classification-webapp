@@ -14,6 +14,7 @@ export function TechnologiesSection() {
         <div className="flex flex-wrap items-center justify-center gap-10 md:gap-14 lg:gap-16">
           <TechIcon src="/images/python.png" alt="Python" />
           <TechIcon src="/images/atom.png" alt="React" />
+          <TechIcon src="/images/nextjs.png" alt="Next.js" />
           <TechIcon src="/images/nodejs.png" alt="Node.js" />
           <TechIcon src="/images/express.png" alt="Express" />
         </div>

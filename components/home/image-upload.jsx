@@ -1,15 +1,21 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, Camera, Loader2, X, Image, CameraIcon } from "lucide-react"
+import { Upload, Camera, Loader2, X, Image, CameraIcon, Lock } from "lucide-react"
 import { useLanguage } from "@/context/language-context"
+import { useAuth } from "@/context/auth-context"
 import { useRouter } from "next/navigation"
 import { classifyWasteImage } from "@/lib/tensorflow-model"
 import { ClassificationResult } from "./classification-results"
-import Webcam from "react-webcam"
+import AuthDialog from "@/components/auth/auth-dialog"
+import dynamic from "next/dynamic"
+
+// Dynamically import Webcam to avoid SSR issues
+const Webcam = dynamic(() => import("react-webcam"), { ssr: false })
 
 export function ImageUpload() {
   const { language } = useLanguage()
+  const { user, isAuthenticated, classify } = useAuth()
   const router = useRouter()
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
@@ -22,6 +28,8 @@ export function ImageUpload() {
   const [error, setError] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
   const [showWebcam, setShowWebcam] = useState(false)
+  const [authDialogOpen, setAuthDialogOpen] = useState(false)
+  const [authMode, setAuthMode] = useState('login')
 
   const handleImageSelect = (file, source = "file") => {
     if (!file || !file.type.startsWith('image/')) {
@@ -126,14 +134,52 @@ export function ImageUpload() {
   const classifyImage = async () => {
     if (!selectedFile) return
 
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setAuthDialogOpen(true)
+      return
+    }
+
+    // We don't need to check limits here as the button is already disabled
+    // and the API will also check this, but we'll keep a front-end check for UX
+    if (isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100) {
+      setError(language === "id" 
+        ? "Batas harian 100 klasifikasi telah tercapai. Upgrade ke Premium untuk lebih banyak klasifikasi!"
+        : "Daily limit of 100 classifications reached. Upgrade to Premium for more classifications!"
+      )
+      return
+    }
+
     setIsClassifying(true)
     setError(null)
 
     try {
       console.log('🔍 Classifying image:', selectedFile.name)
-      const result = await classifyWasteImage(selectedFile, language)
-      setClassificationResult(result)
-      console.log('✅ Classification completed:', result)
+      
+      // Convert file to base64 for API
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const imageData = e.target.result
+        
+        // Use auth context's classify method which handles API call and usage tracking
+        const result = await classify(imageData, null) // We'll add location later if needed
+        
+        if (result.success) {
+          setClassificationResult(result.data.classification)
+          console.log('✅ Classification completed:', result.data)
+        } else {
+          if (result.statusCode === 429) {
+            setError(language === "id" 
+              ? "Batas klasifikasi harian tercapai. Upgrade plan Anda untuk lebih banyak klasifikasi."
+              : "Daily classification limit reached. Please upgrade your plan for more classifications."
+            )
+          } else {
+            setError(result.error)
+          }
+        }
+      }
+      reader.readAsDataURL(selectedFile)
+      
     } catch (error) {
       console.error('❌ Classification failed:', error)
       setError(`Classification failed: ${error.message}`)
@@ -362,6 +408,39 @@ export function ImageUpload() {
         {/* CLASSIFY BUTTON - TRIGGERS classifyModel */}
         {selectedImage && !classificationResult && (
           <div className="p-6 bg-gray-50 border-t">
+            {!isAuthenticated && (
+              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center space-x-2">
+                  <Lock className="w-4 h-4 text-blue-600" />
+                  <p className="text-blue-800 text-sm">
+                    {language === "id" 
+                      ? "Login diperlukan untuk menggunakan fitur klasifikasi AI" 
+                      : "Login required to use AI classification feature"
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {isAuthenticated && user?.plan === 'free' && (
+              <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-yellow-800 text-sm">
+                  {language === "id" 
+                    ? `Sisa klasifikasi hari ini: ${Math.max(0, 100 - (user?.usageCount || 0))}/100` 
+                    : `Remaining classifications today: ${Math.max(0, 100 - (user?.usageCount || 0))}/100`
+                  }
+                </p>
+                {user?.usageCount >= 100 && (
+                  <p className="text-yellow-800 text-xs mt-1">
+                    {language === "id" 
+                      ? "Upgrade ke Premium untuk 50 klasifikasi/hari!" 
+                      : "Upgrade to Premium for 50 classifications/day!"
+                    }
+                  </p>
+                )}
+              </div>
+            )}
+
             {isClassifying ? (
               <div className="flex items-center justify-center space-x-2 py-2">
                 <Loader2 className="w-5 h-5 animate-spin text-green-600" />
@@ -372,14 +451,32 @@ export function ImageUpload() {
             ) : (
               <button
                 onClick={classifyImage}
-                className="w-full bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                disabled={isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100}
+                className={`w-full px-6 py-3 rounded-lg transition-colors font-medium ${
+                  !isAuthenticated 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800 text-white'
+                }`}
               >
-                {language === "id" ? "Klasifikasi dengan AI" : "Classify with AI"}
+                {!isAuthenticated 
+                  ? (language === "id" ? "Login untuk Klasifikasi" : "Login to Classify")
+                  : (language === "id" ? "Klasifikasi dengan AI" : "Classify with AI")
+                }
               </button>
             )}
           </div>
         )}
       </div>
+
+      {/* Auth Dialog */}
+      <AuthDialog
+        isOpen={authDialogOpen}
+        onClose={() => setAuthDialogOpen(false)}
+        mode={authMode}
+        onSwitchMode={(mode) => setAuthMode(mode)}
+      />
     </div>
   )
 }

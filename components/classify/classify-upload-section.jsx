@@ -1,15 +1,20 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
-import { Upload, Camera, X, Loader2, CameraIcon, Image } from "lucide-react"
+import { useState, useCallback, useRef, useEffect } from "react"
+import { Upload, Camera, X, Loader2, CameraIcon, Image, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/context/language-context"
+import { useAuth } from "@/context/auth-context"
 import { ClassificationResultCard } from "./classification-result-card"
 import { classifyWasteImage } from "@/lib/tensorflow-model"
-import Webcam from "react-webcam"
+import dynamic from "next/dynamic"
+
+// Dynamically import Webcam to avoid SSR issues
+const Webcam = dynamic(() => import("react-webcam"), { ssr: false })
 
 export function ClassifyUploadSection({ initialClassificationData, onClassificationUpdate }) {
-  const { language } = useLanguage()
+  const { t, language } = useLanguage()
+  const { user, isAuthenticated, classify } = useAuth()
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
   const webcamRef = useRef(null)
@@ -18,48 +23,77 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
   const [selectedFile, setSelectedFile] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [isClassifying, setIsClassifying] = useState(false)
-  const [classificationResult, setClassificationResult] = useState(initialClassificationData || null)
+  const [classificationResult, setClassificationResult] = useState(null)
   const [error, setError] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
   const [showWebcam, setShowWebcam] = useState(false)
-  const initializedRef = useRef(false)
 
-  // Initialize with initial data only once
-  if (initialClassificationData && !initializedRef.current) {
-    setClassificationResult(initialClassificationData)
-    initializedRef.current = true
-  }
+  // Initialize with data from home page when it's available
+  useEffect(() => {
+    console.log('🏠 ClassifyUploadSection - Initializing with auth state:', { isAuthenticated, user });
+    
+    if (initialClassificationData) {
+      console.log('🏠 ClassifyUploadSection - Initializing with home page data:', initialClassificationData);
+      
+      // Set the classification result
+      setClassificationResult(initialClassificationData);
+      
+      // Set the image if available
+      if (initialClassificationData.image) {
+        setSelectedImage(initialClassificationData.image);
+        
+        // Create a file object from the image data (for display purposes)
+        if (initialClassificationData.imageFileName) {
+          // Create a dummy file for UI consistency
+          const fileName = initialClassificationData.imageFileName;
+          const fileSize = initialClassificationData.imageFileSize || 0;
+          
+          // We don't need the actual file for display, just metadata
+          setSelectedFile({
+            name: fileName,
+            size: fileSize,
+            type: 'image/jpeg'
+          })
+        }
+      }
+    }
+  }, [initialClassificationData])
 
   const handleImageSelect = useCallback((file, source = "file") => {
     if (!file || !file.type.startsWith('image/')) {
-      setError(language === "id" ? "Silakan pilih file gambar" : "Please select an image file")
-      return
+      setError(language === "id" ? "Silakan pilih file gambar" : "Please select an image file");
+      return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError(language === "id" ? "Ukuran file maksimal 10MB" : "Maximum file size is 10MB")
-      return
+      setError(language === "id" ? "Ukuran file maksimal 10MB" : "Maximum file size is 10MB");
+      return;
     }
 
-    setSelectedFile(file)
-    setError(null)
-    setClassificationResult(null)
-    setShowOptions(false)
+    setSelectedFile(file);
+    setError(null);
+    setClassificationResult(null);
+    setShowOptions(false);
     if (onClassificationUpdate) {
-      onClassificationUpdate(null)
+      onClassificationUpdate(null);
     }
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = (e) => {
-      setSelectedImage(e.target.result)
-    }
-    reader.readAsDataURL(file)
+      console.log('📸 Image loaded successfully');
+      setSelectedImage(e.target.result);
+    };
+    reader.onerror = (e) => {
+      console.error('❌ Error reading file:', e);
+      setError(language === "id" ? "Gagal membaca gambar" : "Failed to read image");
+    };
+    reader.readAsDataURL(file);
 
     console.log(`📁 Image selected from ${source}:`, {
       name: file.name,
       size: file.size,
       type: file.type
-    })
+    });
   }, [onClassificationUpdate, language])
 
   const handleFileInput = useCallback((event) => {
@@ -132,22 +166,84 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
   }
 
   const classifyWaste = useCallback(async () => {
-    if (!selectedFile) return
+    if (!selectedFile) {
+      console.log('❌ ClassifyWaste - No file selected');
+      return;
+    }
 
-    setIsClassifying(true)
-    setError(null)
+    console.log('🔍 ClassifyWaste - Starting classification with auth state:', { isAuthenticated, user });
+    
+    setIsClassifying(true);
+    setError(null);
 
     try {
-      console.log('🔍 Classifying waste with TensorFlow model:', selectedFile.name)
+      console.log('🔍 ClassifyWaste - Processing file:', selectedFile.name);
       
-      const result = await classifyWasteImage(selectedFile, language)
-      
-      setClassificationResult(result)
-      if (onClassificationUpdate) {
-        onClassificationUpdate(result)
+      // Convert file to base64 for API
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const imageData = e.target.result;
+        
+        // Check authentication again before calling API
+        if (!isAuthenticated) {
+          console.log('❌ ClassifyWaste - User not authenticated');
+          setError(language === "id" 
+            ? "Anda perlu login untuk mengklasifikasi sampah" 
+            : "You need to login to classify waste");
+          setIsClassifying(false);
+          return;
+        }
+        
+        // Use auth context's classify method which handles API call and usage tracking
+        console.log('🔍 ClassifyWaste - Calling classify method from auth context');
+        const result = await classify(imageData, null); // We'll add location later if needed
+        
+        if (result.success) {
+          console.log('✅ ClassifyWaste - Classification successful:', result.data);
+          setClassificationResult(result.data.classification);
+          if (onClassificationUpdate) {
+            onClassificationUpdate(result.data.classification);
+          }
+        } else {
+          console.error('❌ ClassifyWaste - Classification failed:', result.error, result.statusCode);
+          
+          if (result.statusCode === 429) {
+            const errorMessage = language === "id" 
+              ? "Batas klasifikasi harian tercapai. Upgrade plan Anda untuk lebih banyak klasifikasi."
+              : "Daily classification limit reached. Please upgrade your plan for more classifications.";
+            setError(errorMessage);
+          } else if (result.error === 'Authentication required') {
+            const errorMessage = language === "id"
+              ? "Anda perlu login untuk mengklasifikasi sampah"
+              : "You need to login to classify waste";
+            setError(errorMessage);
+          } else {
+            setError(result.error || 'Classification failed');
+          }
+          
+          // Fallback result in case of error
+          const fallbackResult = {
+            type: "Unknown Waste",
+            typeId: "Sampah Tidak Dikenal",
+            category: "General Waste",
+            categoryId: "Sampah Umum",
+            confidence: 50,
+            description: "Unable to classify this waste accurately",
+            descriptionId: "Tidak dapat mengklasifikasi sampah ini dengan akurat",
+            disposal: "Place in general waste bin",
+            disposalId: "Masukkan ke tempat sampah umum",
+            recommendation: "Consider manual sorting or ask waste management professionals",
+            recommendationId: "Pertimbangkan pemisahan manual atau tanya profesional pengelolaan sampah",
+            method: "reduce",
+          }
+          
+          setClassificationResult(fallbackResult)
+          if (onClassificationUpdate) {
+            onClassificationUpdate(fallbackResult)
+          }
+        }
       }
-      
-      console.log('✅ Classification completed:', result)
+      reader.readAsDataURL(selectedFile)
       
     } catch (error) {
       console.error("❌ Classification error:", error)
@@ -175,7 +271,7 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
     } finally {
       setIsClassifying(false)
     }
-  }, [selectedFile, onClassificationUpdate, language])
+  }, [selectedFile, onClassificationUpdate, language, classify])
 
   const resetUpload = useCallback(() => {
     setSelectedImage(null)
@@ -184,7 +280,6 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
     setError(null)
     setIsClassifying(false)
     setShowOptions(false)
-    initializedRef.current = false
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -232,7 +327,7 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
             </div>
           )}
 
-          {/* FORM UPLOAD - MODIFIKASI DARI HOME PAGE */}
+          {/* FORM UPLOAD - SAMA PERSIS SEPERTI HOME PAGE */}
           {!classificationResult && (
             <div className="bg-white rounded-xl shadow-lg overflow-hidden my-10 md:my-16">
               {/* Image Preview */}
@@ -319,7 +414,7 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                           <div className="p-4 border-b">
                             <div className="flex justify-between items-center">
                               <h3 className="text-lg font-semibold text-gray-900">
-                                {language === "id" ? "Pilih Sumber Gambar" : "Choose Image Source"}
+                                {t("classify.options.title")}
                               </h3>
                               <button
                                 onClick={() => setShowOptions(false)}
@@ -340,10 +435,10 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                               </div>
                               <div>
                                 <p className="font-medium text-gray-900">
-                                  {language === "id" ? "Ambil Foto" : "Take Photo"}
+                                  {t("classify.camera.title")}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                  {language === "id" ? "Gunakan kamera untuk foto langsung" : "Use camera to capture directly"}
+                                  {t("classify.camera.description")}
                                 </p>
                               </div>
                             </button>
@@ -357,10 +452,10 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                               </div>
                               <div>
                                 <p className="font-medium text-gray-900">
-                                  {language === "id" ? "Pilih dari Galeri" : "Choose from Gallery"}
+                                  {t("classify.gallery.title")}
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                  {language === "id" ? "Pilih foto dari penyimpanan" : "Select photo from storage"}
+                                  {t("classify.gallery.description")}
                                 </p>
                               </div>
                             </button>
@@ -374,14 +469,47 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
 
               {/* Error Display */}
               {error && (
-                <div className="mx-6 mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-red-800 text-sm">{error}</p>
+                <div className="mx-6 mb-4 bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-red-800 text-sm font-medium">{error}</p>
                 </div>
               )}
 
-              {/* Classify Button */}
+              {/* Classify Button - SAME AS HOME PAGE */}
               {selectedImage && (
                 <div className="p-6 bg-gray-50 border-t">
+                  {!isAuthenticated && (
+                    <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <Lock className="w-4 h-4 text-blue-600" />
+                        <p className="text-blue-800 text-sm">
+                          {language === "id" 
+                            ? "Login diperlukan untuk menggunakan fitur klasifikasi AI" 
+                            : "Login required to use AI classification feature"
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {isAuthenticated && user?.plan === 'free' && (
+                    <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-yellow-800 text-sm">
+                        {language === "id" 
+                          ? `Sisa klasifikasi hari ini: ${Math.max(0, 100 - (user?.usageCount || 0))}/100` 
+                          : `Remaining classifications today: ${Math.max(0, 100 - (user?.usageCount || 0))}/100`
+                        }
+                      </p>
+                      {user?.usageCount >= 100 && (
+                        <p className="text-yellow-800 text-xs mt-1">
+                          {language === "id" 
+                            ? "Upgrade ke Premium untuk 50 klasifikasi/hari!" 
+                            : "Upgrade to Premium for 50 classifications/day!"
+                          }
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {isClassifying ? (
                     <div className="flex items-center justify-center space-x-2 py-2">
                       <Loader2 className="w-5 h-5 animate-spin text-green-600" />
@@ -392,9 +520,21 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                   ) : (
                     <button
                       onClick={classifyWaste}
-                      className="w-full bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                      disabled={isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100}
+                      className={`w-full px-6 py-3 rounded-lg transition-colors font-medium ${
+                        !isAuthenticated 
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                          : isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-black hover:bg-gray-800 text-white'
+                      }`}
                     >
-                      {language === "id" ? "Klasifikasi dengan AI" : "Classify with AI"}
+                      {!isAuthenticated 
+                        ? (language === "id" ? "Login untuk Klasifikasi" : "Login to Classify")
+                        : isClassifying
+                          ? (language === "id" ? "Menganalisis..." : "Analyzing...")
+                          : (language === "id" ? "Klasifikasi dengan AI" : "Classify with AI")
+                      }
                     </button>
                   )}
                 </div>

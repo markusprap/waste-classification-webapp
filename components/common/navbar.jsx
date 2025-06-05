@@ -4,14 +4,21 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User, LogIn } from "lucide-react"
 import { LanguageSwitcher } from "./language-switcher"
 import { useLanguage } from "@/context/language-context"
+import { useAuth } from "@/context/auth-context"
+import AuthDialog from "@/components/auth/auth-dialog"
+import UserDashboard from "@/components/auth/user-dashboard"
 
 export function Navbar() {
   const { t } = useLanguage()
+  const { user, isAuthenticated } = useAuth()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [authDialogOpen, setAuthDialogOpen] = useState(false)
+  const [authMode, setAuthMode] = useState('login')
+  const [userDashboardOpen, setUserDashboardOpen] = useState(false)
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -19,6 +26,18 @@ export function Navbar() {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false)
+  }
+
+  const handleAuthClick = () => {
+    if (isAuthenticated) {
+      setUserDashboardOpen(true)
+    } else {
+      setAuthDialogOpen(true)
+    }
+  }
+
+  const handleAuthModeSwitch = (mode) => {
+    setAuthMode(mode)
   }
 
   const navLinks = [
@@ -61,9 +80,25 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* Desktop Language Switcher */}
-          <div className="hidden md:flex items-center">
+          {/* Desktop Language Switcher and Auth */}
+          <div className="hidden md:flex items-center space-x-4">
             <LanguageSwitcher />
+            <button
+              onClick={handleAuthClick}
+              className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium bg-black text-white hover:bg-gray-800 transition-colors duration-200"
+            >
+              {isAuthenticated ? (
+                <>
+                  <User className="h-4 w-4" />
+                  <span>{user?.name || 'User'}</span>
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4" />
+                  <span>{t('login') || 'Login'}</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -71,6 +106,16 @@ export function Navbar() {
             <div className="block md:hidden">
               <LanguageSwitcher />
             </div>
+            <button
+              onClick={handleAuthClick}
+              className="p-2 rounded-md text-gray-700 hover:text-green-600 hover:bg-gray-100 transition-colors duration-200"
+            >
+              {isAuthenticated ? (
+                <User className="h-5 w-5" />
+              ) : (
+                <LogIn className="h-5 w-5" />
+              )}
+            </button>
             <button
               onClick={toggleMobileMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-green-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 transition-colors duration-200"
@@ -108,6 +153,20 @@ export function Navbar() {
           </div>
         )}
       </div>
+
+      {/* Auth Dialog */}
+      <AuthDialog
+        isOpen={authDialogOpen}
+        onClose={() => setAuthDialogOpen(false)}
+        mode={authMode}
+        onSwitchMode={handleAuthModeSwitch}
+      />
+
+      {/* User Dashboard */}
+      <UserDashboard
+        isOpen={userDashboardOpen}
+        onClose={() => setUserDashboardOpen(false)}
+      />
     </header>
   )
 }

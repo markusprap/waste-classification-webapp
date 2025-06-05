@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ChevronUp } from "lucide-react"
-import { Button } from "@/components/ui/button.jsx"
+import { Button } from "@/components/ui/button"
 
 export function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false)
@@ -31,7 +31,6 @@ export function ScrollToTop() {
   if (!isVisible) {
     return null
   }
-
   return (
     <Button
       onClick={scrollToTop}

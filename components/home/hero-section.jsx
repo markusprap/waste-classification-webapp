@@ -19,7 +19,16 @@ export function HeroSection() {
               <Link href="/classify">
                 <Button className="bg-black text-white hover:bg-gray-800">{t("hero.getStarted")}</Button>
               </Link>
-              <Button variant="outline" className="border-gray-300">
+              <Button 
+                variant="outline" 
+                className="border-gray-300"
+                onClick={() => {
+                  const benefitsSection = document.querySelector('section[class*="bg-gradient-to-br from-emerald-50"]')
+                  if (benefitsSection) {
+                    benefitsSection.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+              >
                 {t("hero.learnMore")}
               </Button>
             </div>

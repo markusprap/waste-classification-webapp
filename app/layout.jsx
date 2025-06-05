@@ -1,8 +1,7 @@
-// filepath: d:\PROJECTS\Coding Camp 2025 powered by DBS Foundation\wastewise-webapp\app\layout.jsx
 import "@/app/globals.css"
 import { Inter } from "next/font/google"
+import { Providers } from "@/components/providers"
 import { ThemeProvider } from "@/components/theme-provider"
-import { LanguageProvider } from "@/context/language-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -16,13 +15,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider 
-          attribute="class" 
-          defaultTheme="light" 
-          enableSystem={false}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
           disableTransitionOnChange
         >
-          <LanguageProvider>{children}</LanguageProvider>
+          <Providers>
+            {children}
+          </Providers>
         </ThemeProvider>
       </body>
     </html>

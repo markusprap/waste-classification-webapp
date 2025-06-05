@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useLanguage } from "@/context/language-context"
-import { Navigation, ExternalLink } from "lucide-react"
+import { Navigation, ExternalLink, MapPin } from "lucide-react"
 import wastebanks from "./wastebanks.json"
 
 function calculateDistance(lat1, lng1, lat2, lng2) {
@@ -55,6 +55,13 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
 
   // Ambil data dari JSON dan mapping ke format yang dipakai map
   useEffect(() => {
+    if (!userLocation) {
+      // Jika tidak ada user location, jangan tampilkan rekomendasi
+      setWasteLocations([])
+      setRecommendedWasteBanks([])
+      return
+    }
+
     let mapped = wastebanks
       .filter((d) => d.latitude && d.longitude)
       .map((d, idx) => ({
@@ -68,40 +75,31 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
         city: extractCity(d.alamat)
       }))
 
-    if (userLocation) {
-      // Hitung jarak untuk semua bank sampah
-      mapped = mapped.map((loc) => ({
-        ...loc,
-        distance: calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng),
-        distanceText: (() => {
-          const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng)
-          return dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`
-        })()
-      }))
+    // Hitung jarak untuk semua bank sampah
+    mapped = mapped.map((loc) => ({
+      ...loc,
+      distance: calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng),
+      distanceText: (() => {
+        const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng)
+        return dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`
+      })()
+    }))
 
-      // Untuk rekomendasi (radius 50km)
-      const recommended = mapped
-        .filter((loc) => loc.distance <= 50)
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 15)
-      
-      setRecommendedWasteBanks(recommended)
-      
-      if (recommended.length > 0) {
-        setUserCity(recommended[0].city)
-      }
-
-      // Untuk ditampilkan di map (radius 15km)
-      mapped = mapped
-        .filter((loc) => loc.distance <= 15)
-        .sort((a, b) => a.distance - b.distance)
-    } else {
-      // Jika tidak ada user location, tampilkan sample bank sampah
-      mapped = mapped.slice(0, 20)
-      setRecommendedWasteBanks(mapped.slice(0, 15))
-    }
+    // Untuk rekomendasi dan map (radius 50km - konsisten)
+    const filtered = mapped
+      .filter((loc) => loc.distance <= 50)
+      .sort((a, b) => a.distance - b.distance)
     
-    setWasteLocations(mapped)
+    // Untuk rekomendasi (ambil 15 terdekat)
+    const recommended = filtered.slice(0, 15)
+    setRecommendedWasteBanks(recommended)
+    
+    if (recommended.length > 0) {
+      setUserCity(recommended[0].city)
+    }
+
+    // Untuk ditampilkan di map (semua dalam radius 50km)
+    setWasteLocations(filtered)
   }, [userLocation])
 
   // Initialize map
@@ -294,11 +292,11 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
                 </div>
               )}
             </div>
-            {wasteLocations.length > 0 && (
+            {recommendedWasteBanks.length > 0 && (
               <div className="mt-2 text-sm text-gray-500">
                 {language === "id" 
-                  ? `Menampilkan ${wasteLocations.length} bank sampah ${userLocation ? 'dalam radius 15km' : 'terdekat'}`
-                  : `Showing ${wasteLocations.length} waste banks ${userLocation ? 'within 15km radius' : 'nearby'}`
+                  ? `Menampilkan ${recommendedWasteBanks.length} bank sampah terdekat ${userLocation ? 'dalam radius 50km' : ''}`
+                  : `Showing ${recommendedWasteBanks.length} nearest waste banks ${userLocation ? 'within 50km radius' : ''}`
                 }
               </div>
             )}
@@ -308,85 +306,106 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
         {/* Recommendations Section */}
         <div className="lg:col-span-1">
           <div className="rounded-lg bg-white border border-gray-200 p-4 h-[544px] flex flex-col">
-            <div className="mb-4">
-              <h4 className="font-medium text-gray-900">
-                {language === "id" 
-                  ? `Rekomendasi Bank Sampah${userCity ? ` di ${userCity}` : ""}`
-                  : `Waste Bank Recommendations${userCity ? ` in ${userCity}` : ""}`
-                }
-              </h4>
-              <p className="text-sm text-gray-500 mt-1">
-                {language === "id" 
-                  ? `${recommendedWasteBanks.length} bank sampah ${userLocation ? 'dalam radius 50km' : 'ditemukan'}`
-                  : `${recommendedWasteBanks.length} waste banks ${userLocation ? 'within 50km radius' : 'found'}`
-                }
-              </p>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto space-y-3">
-              {recommendedWasteBanks.length > 0 ? (
-                recommendedWasteBanks.map((bank, index) => (
-                  <div 
-                    key={bank.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
-                      selectedLocation === bank.id 
-                        ? "border-green-500 bg-green-50 shadow-md" 
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                    onClick={() => {
-                      setSelectedLocation(selectedLocation === bank.id ? null : bank.id)
-                      highlightLocationOnMap(bank)
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h5 className="font-medium text-sm text-gray-900 leading-tight flex-1 pr-2">
-                        {index + 1}. {bank.name}
-                      </h5>
-                      {bank.distanceText && (
-                        <div className="flex items-center space-x-1 text-sm font-medium text-orange-600 shrink-0">
-                          <Navigation className="w-3 h-3" />
-                          <span>{bank.distanceText}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">{bank.address}</p>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded-full">
-                        {bank.type}
-                      </span>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openInGoogleMaps(bank)
-                        }}
-                        className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        {language === "id" ? "Buka Maps" : "Open Maps"}
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Navigation className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <h5 className="font-medium text-gray-900 mb-2">
-                    {language === "id" ? "Tidak Ada Bank Sampah" : "No Waste Banks Found"}
-                  </h5>
-                  <p className="text-sm text-gray-500">
+            {!userLocation ? (
+              // Show message when no location is set
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
+                <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <MapPin className="w-8 h-8 text-gray-400" />
+                </div>
+                <h4 className="font-medium text-gray-900 mb-2">
+                  {language === "id" ? "Lokasi Belum Ditentukan" : "Location Not Set"}
+                </h4>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  {language === "id" 
+                    ? "Klik tombol 'Dapatkan Lokasi' untuk melihat rekomendasi bank sampah terdekat di sekitar Anda"
+                    : "Click 'Get Location' button to see nearby waste bank recommendations around you"
+                  }
+                </p>
+              </div>
+            ) : (
+              // Show recommendations when location is available
+              <>
+                <div className="mb-4">
+                  <h4 className="font-medium text-gray-900">
                     {language === "id" 
-                      ? "Tidak ada bank sampah yang ditemukan di area ini"
-                      : "No waste banks found in this area"
+                      ? `Rekomendasi Bank Sampah${userCity ? ` di ${userCity}` : ""}`
+                      : `Waste Bank Recommendations${userCity ? ` in ${userCity}` : ""}`
+                    }
+                  </h4>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {language === "id" 
+                      ? `${recommendedWasteBanks.length} bank sampah dalam radius 50km`
+                      : `${recommendedWasteBanks.length} waste banks within 50km radius`
                     }
                   </p>
                 </div>
-              )}
-            </div>
+                
+                <div className="flex-1 overflow-y-auto space-y-3">
+                  {recommendedWasteBanks.length > 0 ? (
+                    recommendedWasteBanks.map((bank, index) => (
+                      <div 
+                        key={bank.id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 ${
+                          selectedLocation === bank.id 
+                            ? "border-green-500 bg-green-50 shadow-md" 
+                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        }`}
+                        onClick={() => {
+                          setSelectedLocation(selectedLocation === bank.id ? null : bank.id)
+                          highlightLocationOnMap(bank)
+                        }}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h5 className="font-medium text-sm text-gray-900 leading-tight flex-1 pr-2">
+                            {index + 1}. {bank.name}
+                          </h5>
+                          {bank.distanceText && (
+                            <div className="flex items-center space-x-1 text-sm font-medium text-orange-600 shrink-0">
+                              <Navigation className="w-3 h-3" />
+                              <span>{bank.distanceText}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{bank.address}</p>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded-full">
+                            {bank.type}
+                          </span>
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openInGoogleMaps(bank)
+                            }}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            {language === "id" ? "Buka Maps" : "Open Maps"}
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <Navigation className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <h5 className="font-medium text-gray-900 mb-2">
+                        {language === "id" ? "Tidak Ada Bank Sampah" : "No Waste Banks Found"}
+                      </h5>
+                      <p className="text-sm text-gray-500">
+                        {language === "id" 
+                          ? "Tidak ada bank sampah yang ditemukan dalam radius 50km dari lokasi Anda"
+                          : "No waste banks found within 50km radius of your location"
+                        }
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

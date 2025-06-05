@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Force dynamic rendering for all pages during build to avoid SSR issues with auth context
   experimental: {
-    esmExternals: false,
+    forceSwcTransforms: true,
   },
   webpack: (config, { isServer }) => {
     // Handle TensorFlow.js
