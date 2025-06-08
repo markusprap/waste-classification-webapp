@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules
 
 # next.js
 /.next/
@@ -26,3 +27,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /lib/generated/prisma
+
+# Backend files
+backend/logs/
+backend/temp/
+backend/uploads/
+backend/node_modules/
+backend/.env*
+backend/prisma/dev.db*
+backend/package-lock.json
