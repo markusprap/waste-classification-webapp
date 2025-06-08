@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Classification Response",
+  "type": "object",
+  "properties": {
+    "success": {
+      "type": "boolean"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "predicted_class": {
+          "type": "string",
+          "enum": ["organic", "recyclable", "hazardous", "general_waste"]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "is_confident": {
+          "type": "boolean"
+        },
+        "probabilities": {
+          "type": "object"
+        },
+        "processing_time": {
+          "type": "number"
+        },
+        "savedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["predicted_class", "confidence"]
+    },
+    "error": {
+      "type": "string"
+    }
+  },
+  "required": ["success"]
+}

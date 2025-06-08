@@ -1,13 +1,12 @@
-# Waste Classification Webapp
+# Waste Classification Web App
 
-A web application developed for the Capstone Project at Coding Camp 2025, powered by DBS Foundation.
+A web application that can classify different types of waste using machine learning.
+Built for Coding Camp 2025 Capstone Project.
 
-## Overview
-
-This project aims to help users classify waste efficiently using machine learning and a user-friendly web interface.
+## What it does
+Upload a photo of waste and the AI will tell you what type it is (organic, recyclable, etc).
 
 ## Features
-
 - Image-based waste classification
 - Real-time predictions
 - Educational resources on waste management
