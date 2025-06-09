@@ -15,10 +15,12 @@ export async function POST(request) {
       );
     }
 
-    const { plan } = await request.json();    // Validate plan
-    if (!['premium', 'corporate'].includes(plan)) {
+    const { plan } = await request.json();
+    
+    // Validate plan - only premium is available now
+    if (plan !== 'premium') {
       return NextResponse.json(
-        { error: 'Invalid plan. Choose premium or corporate' },
+        { error: 'Invalid plan. Only premium plan is available' },
         { status: 400 }
       );
     }
@@ -42,55 +44,48 @@ export async function POST(request) {
       );
     }
 
-    // Update user plan and reset daily usage
+    // Update user plan
     const updatedUser = await prisma.user.update({
-      where: { id: decoded.userId },
+      where: { id: user.id },
       data: {
-        plan,
+        plan: plan,
+        usageLimit: plan === 'premium' ? 1000 : 30, // Very high limit for premium
+        // Reset usage count when upgrading
         usageCount: 0,
-        lastUsageReset: null
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        plan: true,
-        usageCount: true,
-        usageLimit: true,
-        lastUsageReset: true,
-        createdAt: true
+        lastUsageReset: new Date()
       }
     });
 
-    // In a real app, you would integrate with a payment processor here
-    // For now, we'll just simulate successful upgrade
+    // Record subscription in database (for tracking)
     await prisma.subscription.create({
       data: {
-        userId: decoded.userId,
-        plan,
-        status: 'active',
+        userId: user.id,
+        plan: plan,
         startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        paymentId: `sim_${Date.now()}` // Simulated payment ID
+        // Set a 1 year validity for the subscription
+        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
       }
     });
 
     return NextResponse.json({
+      success: true,
       message: `Successfully upgraded to ${plan} plan`,
-      user: updatedUser,
-      benefits: plan === 'premium' ? {
-        classifications: '50 per day',
-        features: ['Priority support', 'Advanced analytics', 'Export data']
-      } : {
-        classifications: 'Unlimited',
-        features: ['Priority support', 'Advanced analytics', 'Export data', 'Custom integrations', 'Team management']
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        image: updatedUser.image,
+        plan: updatedUser.plan,
+        usageCount: updatedUser.usageCount,
+        usageLimit: updatedUser.usageLimit,
+        lastUsageReset: updatedUser.lastUsageReset
       }
     });
 
   } catch (error) {
     console.error('Upgrade error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to upgrade plan' },
       { status: 500 }
     );
   }

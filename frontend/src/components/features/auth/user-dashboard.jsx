@@ -1,28 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
-import { useAuth } from '@/context/auth-context';
-import { useLanguage } from '@/context/language-context';
+import { useAuth } from '@/models/auth-context';
+import { useLanguage } from '@/models/language-context';
 import { Button } from '@/components/ui/button';
 import { 
   AlertDialog, 
-  AlertDialogAction, 
   AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
 import AnalyticsDashboard from './analytics-dashboard';
 
 export default function UserDashboard({ isOpen, onClose }) {
-  const { user, session, upgradePlan } = useAuth();
+  const { user, upgradePlan } = useAuth();
   const { language } = useLanguage();
   const [upgrading, setUpgrading] = useState(false);
   const [upgradeError, setUpgradeError] = useState('');
   const [upgradeSuccess, setUpgradeSuccess] = useState('');
-  const [showAnalytics, setShowAnalytics] = useState(false);  const handleLogout = async () => {
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const dialogRef = useRef(null);
+  
+  // Handle click outside to close the dialog
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dialogRef.current && !dialogRef.current.contains(event.target)) {
+        onClose();
+      }
+    }
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  const handleLogout = async () => {
     // First close the dashboard dialog
     onClose();
     
@@ -63,17 +80,15 @@ export default function UserDashboard({ isOpen, onClose }) {
     switch (plan) {
       case 'free': return 'bg-gray-100 text-gray-800';
       case 'premium': return 'bg-blue-100 text-blue-800';
-      case 'corporate': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getDailyLimit = (plan) => {
+  const getMonthlyLimit = (plan) => {
     switch (plan) {
-      case 'free': return 5;
-      case 'premium': return 50;
-      case 'corporate': return 'unlimited';
-      default: return 5;
+      case 'free': return 30;
+      case 'premium': return 'unlimited';
+      default: return 30;
     }
   };
 
@@ -104,7 +119,7 @@ export default function UserDashboard({ isOpen, onClose }) {
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="sm:max-w-lg">
+      <AlertDialogContent className="sm:max-w-lg" ref={dialogRef}>
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl font-bold text-center">
             {language === 'id' ? 'Dashboard Pengguna' : 'User Dashboard'}
@@ -126,25 +141,27 @@ export default function UserDashboard({ isOpen, onClose }) {
           {/* Usage Statistics */}
           <div className="bg-green-50 rounded-lg p-4">
             <h4 className="font-semibold mb-2">
-              {language === 'id' ? 'Penggunaan Hari Ini' : 'Today\'s Usage'}
+              {language === 'id' ? 'Penggunaan Bulan Ini' : 'This Month\'s Usage'}
             </h4>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">
                 {language === 'id' ? 'Klasifikasi' : 'Classifications'}:
-              </span>              <span className="font-semibold">
-                {user.usageCount || 0} / {getDailyLimit(user.plan)}
+              </span>
+              <span className="font-semibold">
+                {user.usageCount || 0} / {getMonthlyLimit(user.plan)}
               </span>
             </div>
             
             {user.plan === 'free' && (
               <div className="mt-2">
-                <div className="bg-gray-200 rounded-full h-2">                  <div 
+                <div className="bg-gray-200 rounded-full h-2">
+                  <div 
                     className="bg-green-600 h-2 rounded-full" 
-                    style={{ width: `${Math.min((user.usageCount || 0) / 5 * 100, 100)}%` }}
+                    style={{ width: `${Math.min((user.usageCount || 0) / 30 * 100, 100)}%` }}
                   ></div>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {5 - (user.usageCount || 0)} {language === 'id' ? 'klasifikasi tersisa' : 'classifications remaining'}
+                  {30 - (user.usageCount || 0)} {language === 'id' ? 'klasifikasi tersisa' : 'classifications remaining'}
                 </p>
               </div>
             )}
@@ -165,16 +182,21 @@ export default function UserDashboard({ isOpen, onClose }) {
                 >
                   {language === 'id' ? '📊 Analytics Dashboard' : '📊 Analytics Dashboard'}
                 </Button>
-                
-                {user.plan === 'corporate' && (
                   <Button
-                    onClick={() => window.open('/api/export?format=csv', '_blank')}
-                    variant="outline"
-                    className="w-full justify-start"
-                  >
-                    {language === 'id' ? '📄 Export Data' : '📄 Export Data'}
-                  </Button>
-                )}
+                  onClick={() => window.open('/api/export?format=csv', '_blank')}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  {language === 'id' ? '📄 Export Data' : '📄 Export Data'}
+                </Button>
+                
+                <Button
+                  onClick={() => window.open('/payment/dashboard', '_blank')}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  {language === 'id' ? '💳 Riwayat Pembayaran' : '💳 Payment History'}
+                </Button>
               </div>
             </div>
           )}
@@ -185,14 +207,16 @@ export default function UserDashboard({ isOpen, onClose }) {
               <h4 className="font-semibold">
                 {language === 'id' ? 'Upgrade Plan Anda' : 'Upgrade Your Plan'}
               </h4>
-              
-              <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                 <div className="border rounded-lg p-3 hover:bg-blue-50 transition-colors">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-start">
                     <div>
                       <h5 className="font-medium">Premium Plan</h5>
-                      <p className="text-sm text-gray-600">
-                        {language === 'id' ? '50 klasifikasi/hari' : '50 classifications/day'}
+                      <p className="text-sm text-gray-600 mb-1">
+                        {language === 'id' ? 'Klasifikasi unlimited per bulan' : 'Unlimited classifications per month'}
+                      </p>
+                      <p className="text-xs font-medium text-green-600">
+                        Rp 10.000 {language === 'id' ? 'per bulan' : 'per month'}
                       </p>
                     </div>
                     <Button
@@ -201,26 +225,17 @@ export default function UserDashboard({ isOpen, onClose }) {
                       size="sm"
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      {language === 'id' ? 'Upgrade' : 'Upgrade'}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-3 hover:bg-purple-50 transition-colors">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h5 className="font-medium">Corporate Plan</h5>
-                      <p className="text-sm text-gray-600">
-                        {language === 'id' ? 'Klasifikasi unlimited' : 'Unlimited classifications'}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => handleUpgrade('corporate')}
-                      disabled={upgrading}
-                      size="sm"
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                    >
-                      {language === 'id' ? 'Upgrade' : 'Upgrade'}
+                      {upgrading ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          {language === 'id' ? 'Memproses...' : 'Processing...'}
+                        </span>
+                      ) : (
+                        language === 'id' ? 'Upgrade' : 'Upgrade'
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -239,7 +254,9 @@ export default function UserDashboard({ isOpen, onClose }) {
               {upgradeSuccess}
             </div>
           )}
-        </div>        <AlertDialogFooter className="flex flex-col gap-2">
+        </div>
+        
+        <div className="mt-6">
           <Button
             onClick={handleLogout}
             variant="destructive"
@@ -247,14 +264,7 @@ export default function UserDashboard({ isOpen, onClose }) {
           >
             {language === 'id' ? 'Keluar' : 'Logout'}
           </Button>
-          
-          <AlertDialogAction
-            onClick={onClose}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-800"
-          >
-            {language === 'id' ? 'Tutup' : 'Close'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );

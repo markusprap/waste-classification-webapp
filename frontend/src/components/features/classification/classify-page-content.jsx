@@ -2,13 +2,13 @@
 
 import { useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Navbar } from "@/components/common/navbar"
-import { Footer } from "@/components/common/footer"
+import { Navbar } from "@/components/features/navigation/navbar"
+import { Footer } from "@/components/features/shared/footer"
 import { ClassifyUploadSection } from "./classify-upload-section"
 import { WasteManagementMethods } from "./waste-management-methods"
-import { MapSection } from "@/components/home/map-section"
-import { useLanguage } from "@/context/language-context"
-import { ScrollToTop } from "@/components/common/scroll-to-top"
+import { MapSection } from "@/components/features/maps/map-section"
+import { useLanguage } from "@/models/language-context"
+import { ScrollToTop } from "@/components/features/shared/scroll-to-top"
 
 export function ClassifyPageContent() {
   const { language, t } = useLanguage()

@@ -3,19 +3,20 @@
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 
-export function SignInButton({ provider }) {
-  const handleSignIn = async () => {
+export function SignInButton({ provider }) {  const handleSignIn = async () => {
     // Get current URL to ensure we return to the same port
     const callbackUrl = window.location.origin;
     
-    // For Google provider, redirect to a special URL that forces account selection
+    // Use the signIn function with the callbackUrl and redirect: true option
+    // to ensure we skip the signin page
     if (provider.id === 'google') {
       await signIn(provider.id, { 
         callbackUrl,
-        prompt: 'select_account'  // This forces Google to show the account selection screen
+        prompt: 'select_account',  // This forces Google to show the account selection screen
+        redirect: true
       });
     } else {
-      await signIn(provider.id, { callbackUrl });
+      await signIn(provider.id, { callbackUrl, redirect: true });
     }
   };
 

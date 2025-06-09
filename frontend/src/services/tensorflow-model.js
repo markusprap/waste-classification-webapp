@@ -69,37 +69,33 @@ let isModelLoading = false
  */
 export async function loadModel() {
   if (model) {
-    console.log('🔄 Model already loaded, returning existing model');
+    console.log('Model already loaded, returning existing model');
     return model;
   }
 
   if (isModelLoading) {
-    console.log('🔄 Model is currently loading, waiting...');
-    // Wait for the model to load
+    console.log('Model is currently loading, waiting...');
     let waitAttempts = 0;
-    while (isModelLoading && waitAttempts < 50) { // Limit waiting to prevent infinite loops
+    while (isModelLoading && waitAttempts < 50) {
       await new Promise(resolve => setTimeout(resolve, 100));
       waitAttempts++;
     }
     
     if (model) {
-      console.log('🔄 Model finished loading while waiting');
+      console.log('Model finished loading while waiting');
       return model;
     } else if (waitAttempts >= 50) {
-      console.error('⏱️ Timed out waiting for model to load');
+      console.error('Timed out waiting for model to load');
       throw new Error('Timed out waiting for model to load');
     }
   }
   
   try {
     isModelLoading = true;
-    console.log('🔄 Loading TensorFlow.js model...');
-    
-    // Check if we're in a server-side environment
-    if (typeof window === 'undefined') {
-      console.log('⚠️ Server-side environment detected - using mock model');
+    console.log('Loading TensorFlow.js model...');
+        if (typeof window === 'undefined') {
+      console.log('Server-side environment detected - using mock model');
       
-      // Create a mock model for server-side rendering
       model = {
         predict: () => ({
           data: () => Promise.resolve([0.4, 0.3, 0.3]),
@@ -109,28 +105,24 @@ export async function loadModel() {
         dispose: () => {}
       };
       
-      console.log('✅ Mock model created for server-side');
+      console.log('Mock model created for server-side');
       return model;
     }
     
-    // Client-side model loading
     try {
-      // Use window.location.origin to create a complete URL to fix the 'Failed to parse URL' error
       const baseUrl = window.location.origin
       const modelUrl = `${baseUrl}/model/model-update/model-update.json`
-      console.log('📂 Loading model from:', modelUrl)
+      console.log('Loading model from:', modelUrl)
       
       model = await tf.loadGraphModel(modelUrl)
       
-      console.log('✅ Model loaded successfully')
-      console.log('📊 Model summary:', model)
-      
-      return model
+      console.log('Model loaded successfully')
+      console.log('Model summary:', model)
+        return model
     } catch (clientError) {
-      console.error('❌ Client-side model loading failed:', clientError)
+      console.error('Client-side model loading failed:', clientError)
       
-      // Create a fallback model that returns sensible predictions
-      console.log('⚠️ Creating fallback prediction model')
+      console.log('Creating fallback prediction model')
       model = {
         predict: () => ({
           data: () => Promise.resolve([0.4, 0.3, 0.3]),
@@ -144,7 +136,7 @@ export async function loadModel() {
       return model
     }
   } catch (error) {
-    console.error('❌ Error loading model:', error)
+    console.error('Error loading model:', error)
     throw new Error(`Failed to load model: ${error.message}`)
   } finally {
     isModelLoading = false
@@ -157,22 +149,18 @@ export async function loadModel() {
  * @returns {tf.Tensor} Preprocessed tensor
  */
 function preprocessImage(imageElement) {
-  // Check if we're in a server environment
   if (typeof window === 'undefined') {
-    console.log('⚠️ Server-side preprocessing - using mock tensor');
-    // Create a mock tensor for server-side rendering
+    console.log('Server-side preprocessing - using mock tensor');
     return {
       dispose: () => {}
-      // Add any other properties needed by the predict function
     };
   }
   
-  // Convert image to tensor and resize to model input size (150x150)
   const tensor = tf.browser.fromPixels(imageElement)
-    .resizeNearestNeighbor([150, 150]) // Model expects 150x150 input
-    .expandDims(0) // Add batch dimension
+    .resizeNearestNeighbor([150, 150])
+    .expandDims(0)
     .toFloat()
-    .div(255.0) // Normalize to [0, 1]
+    .div(255.0)
 
   return tensor
 }
@@ -185,11 +173,11 @@ function preprocessImage(imageElement) {
 async function predict(preprocessedImage) {
   try {
     // Check if we're in a server environment
-    if (typeof window === 'undefined') {
-      console.log('⚠️ Server-side prediction - using mock prediction data');
-      
-      // Mock prediction data for server-side
-      const probabilities = [0.6, 0.3, 0.1]; // Sample probability distribution
+  if (typeof window === 'undefined') {
+    console.log('Server-side prediction - using mock prediction data');
+    
+    // Mock prediction data for server-side
+    const probabilities = [0.6, 0.3, 0.1]; // Sample probability distribution
       const maxProbabilityIndex = 0; // Default to recyclable waste
       const confidence = 60; // Default confidence
       
@@ -207,10 +195,9 @@ async function predict(preprocessedImage) {
     // Get prediction values
     const predictionArray = await predictions.data()
     const probabilities = Array.from(predictionArray)
-    
-    // Enhanced debugging - UPDATED for correct mapping
-    console.log('🔍 Raw prediction probabilities:', probabilities)
-    console.log('🔍 Probabilities mapped to classes (FIXED MAPPING):', {
+      // Enhanced debugging - UPDATED for correct mapping
+    console.log('Raw prediction probabilities:', probabilities)
+    console.log('Probabilities mapped to classes (FIXED MAPPING):', {
       '0 - Recyclable Waste': (probabilities[0] * 100).toFixed(2) + '%',
       '1 - Organic Waste': (probabilities[1] * 100).toFixed(2) + '%', 
       '2 - Inorganic Waste': (probabilities[2] * 100).toFixed(2) + '%'
@@ -220,12 +207,12 @@ async function predict(preprocessedImage) {
     const maxProbabilityIndex = probabilities.indexOf(Math.max(...probabilities))
     const confidence = Math.round(probabilities[maxProbabilityIndex] * 100)
     
-    console.log('🎯 Predicted class index:', maxProbabilityIndex)
-    console.log('🎯 Predicted class name:', CLASS_NAMES.en[maxProbabilityIndex])
-    console.log('🎯 Confidence:', confidence + '%')
+    console.log('Predicted class index:', maxProbabilityIndex)
+    console.log('Predicted class name:', CLASS_NAMES.en[maxProbabilityIndex])
+    console.log('Confidence:', confidence + '%')
     
     // Additional debug: Show all probabilities with percentages
-    console.log('📊 All predictions:')
+    console.log('All predictions:')
     probabilities.forEach((prob, index) => {
       console.log(`   Index ${index} (${CLASS_NAMES.en[index]}): ${(prob * 100).toFixed(2)}%`)
     })
@@ -237,10 +224,9 @@ async function predict(preprocessedImage) {
     return {
       classIndex: maxProbabilityIndex,
       confidence,
-      probabilities
-    }
+      probabilities    }
   } catch (error) {
-    console.error('❌ Prediction error:', error)
+    console.error('Prediction error:', error)
     throw new Error(`Prediction failed: ${error.message}`)
   }
 }
@@ -251,10 +237,9 @@ async function predict(preprocessedImage) {
  * @returns {Promise<HTMLImageElement>} Image element
  */
 function createImageElement(file) {
-  return new Promise((resolve, reject) => {
-    // Check if we're in a server environment
+  return new Promise((resolve, reject) => {    // Check if we're in a server environment
     if (typeof window === 'undefined') {
-      console.log('⚠️ Server-side image processing - using mock image');
+      console.log('Server-side image processing - using mock image');
       // Create a mock image element for server-side rendering
       const mockImg = {
         width: 150,
@@ -287,7 +272,7 @@ function createImageElement(file) {
  */
 export async function classifyWasteImage(imageFile, language = 'en') {
   try {
-    console.log('🔍 Starting waste classification...')
+    console.log('Starting waste classification...')
     
     // Check if we're in a server environment
     const isServer = typeof window === 'undefined';
@@ -300,11 +285,9 @@ export async function classifyWasteImage(imageFile, language = 'en') {
     
     if (!isValidFile) {
       throw new Error('Invalid image file');
-    }
-
-    // SPECIAL SERVER-SIDE HANDLING
+    }    // SPECIAL SERVER-SIDE HANDLING
     if (isServer) {
-      console.log('⚠️ Server-side classification detected - using pre-defined result');
+      console.log('Server-side classification detected - using pre-defined result');
       
       // Get a semi-random but stable class based on file size or buffer length
       const fileSize = imageFile.size || (imageFile.buffer ? imageFile.buffer.length : 0);
@@ -337,10 +320,9 @@ export async function classifyWasteImage(imageFile, language = 'en') {
           classIndex === 1 ? 0.7 : 0.15, 
           classIndex === 2 ? 0.7 : 0.15
         ],
-        source: "server-side-classification"
-      };
+        source: "server-side-classification"      };
       
-      console.log('✅ Server-side classification completed:', result);
+      console.log('Server-side classification completed:', result);
       return result;
     }
 
@@ -350,24 +332,22 @@ export async function classifyWasteImage(imageFile, language = 'en') {
     
     if (!model) {
       throw new Error('Model not loaded')
-    }
-
-    // Create image element
-    console.log('📷 Processing image...')
+    }    // Create image element
+    console.log('Processing image...')
     const imageElement = await createImageElement(imageFile)
     
     // Preprocess image
-    console.log('🔧 Preprocessing image...')
+    console.log('Preprocessing image...')
     const preprocessedImage = preprocessImage(imageElement)
     
     // Make prediction
-    console.log('🤖 Making prediction...')
+    console.log('Making prediction...')
     const prediction = await predict(preprocessedImage)
     
     // Check if confidence is too low (might indicate wrong classification)
     if (prediction.confidence < 40) {
-      console.warn('⚠️ Low confidence prediction:', prediction.confidence + '%')
-      console.warn('⚠️ This might indicate the model is uncertain about the classification')
+      console.warn('Low confidence prediction:', prediction.confidence + '%')
+      console.warn('This might indicate the model is uncertain about the classification')
     }
     
     // Get class name
@@ -391,14 +371,13 @@ export async function classifyWasteImage(imageFile, language = 'en') {
       recommendation: managementInfo.recommendation,
       recommendationId: managementInfo.recommendationId,
       method: managementInfo.method,
-      probabilities: prediction.probabilities
-    }
+      probabilities: prediction.probabilities    }
     
-    console.log('✅ Classification completed:', result)
+    console.log('Classification completed:', result)
     return result
     
   } catch (error) {
-    console.error('❌ Classification failed:', error)
+    console.error('Classification failed:', error)
     throw new Error(`Classification failed: ${error.message}`)
   }
 }
@@ -409,9 +388,9 @@ export async function classifyWasteImage(imageFile, language = 'en') {
 export async function preloadModel() {
   try {
     await loadModel()
-    console.log('✅ Model preloaded successfully')
+    console.log('Model preloaded successfully')
   } catch (error) {
-    console.warn('⚠️ Model preload failed:', error.message)
+    console.warn('Model preload failed:', error.message)
   }
 }
 
@@ -426,17 +405,17 @@ export function getModelInfo() {
 
 // Debug function untuk testing manual
 export function debugClassMapping() {
-  console.log('🔍 FIXED Class Mapping (Updated):')
+  console.log('FIXED Class Mapping (Updated):')
   console.log('Index 0:', CLASS_NAMES.en[0], '→', CLASS_NAMES.id[0])
   console.log('Index 1:', CLASS_NAMES.en[1], '→', CLASS_NAMES.id[1]) 
   console.log('Index 2:', CLASS_NAMES.en[2], '→', CLASS_NAMES.id[2])
   
-  console.log('\n🎯 Expected behavior (CORRECTED):')
-  console.log('Plastic bottles → Should predict Index 0 (Recyclable Waste) ✅')
-  console.log('Food waste → Should predict Index 1 (Organic Waste) ✅')
-  console.log('Non-recyclable items → Should predict Index 2 (Inorganic Waste) ✅')
+  console.log('\nExpected behavior (CORRECTED):')
+  console.log('Plastic bottles → Should predict Index 0 (Recyclable Waste)')
+  console.log('Food waste → Should predict Index 1 (Organic Waste)')
+  console.log('Non-recyclable items → Should predict Index 2 (Inorganic Waste)')
   
-  console.log('\n✅ ISSUE RESOLVED:')
+  console.log('\nISSUE RESOLVED:')
   console.log('Previous issue: Plastic bottles were classified as Organic (Index 0)')
   console.log('Fixed: Corrected class mapping so plastic bottles → Recyclable (Index 0)')
   
@@ -446,32 +425,32 @@ export function debugClassMapping() {
 // Function untuk testing dengan mapping alternatif
 export function testAlternativeMapping(useAlt = false) {
   const mapping = useAlt ? ALT_CLASS_NAMES : CLASS_NAMES
-  console.log('🔄 Using mapping:', useAlt ? 'ALTERNATIVE' : 'CURRENT')
+  console.log('Using mapping:', useAlt ? 'ALTERNATIVE' : 'CURRENT')
   console.log(mapping)
   return mapping
 }
 
 // Comprehensive class mapping test function
 export function verifyClassMapping() {
-  console.log('✅ CLASS MAPPING VERIFICATION - ISSUE FIXED!')
+  console.log('CLASS MAPPING VERIFICATION - ISSUE FIXED!')
   console.log('=' .repeat(50))
   
-  console.log('\n📋 CORRECTED MAPPING (ACTIVE):')
-  console.log('Index 0 → Recyclable Waste (Plastik, botol, kaleng) ✅')
-  console.log('Index 1 → Organic Waste (Makanan, daun, organik) ✅')  
-  console.log('Index 2 → Inorganic Waste (Sampah umum non-recyclable) ✅')
+  console.log('\nCORRECTED MAPPING (ACTIVE):')
+  console.log('Index 0 → Recyclable Waste (Plastik, botol, kaleng)')
+  console.log('Index 1 → Organic Waste (Makanan, daun, organik)')  
+  console.log('Index 2 → Inorganic Waste (Sampah umum non-recyclable)')
   
-  console.log('\n🎯 EXPECTED BEHAVIOR (NOW CORRECT):')
-  console.log('Plastic bottles → Will predict Index 0 (Recyclable Waste) ✅')
-  console.log('Food waste → Will predict Index 1 (Organic Waste) ✅')
-  console.log('Non-recyclable → Will predict Index 2 (Inorganic Waste) ✅')
+  console.log('\nEXPECTED BEHAVIOR (NOW CORRECT):')
+  console.log('Plastic bottles → Will predict Index 0 (Recyclable Waste)')
+  console.log('Food waste → Will predict Index 1 (Organic Waste)')
+  console.log('Non-recyclable → Will predict Index 2 (Inorganic Waste)')
   
-  console.log('\n✅ ISSUE RESOLUTION:')
-  console.log('❌ PREVIOUS: Plastic bottles → Index 0 (wrongly labeled as Organic)')
-  console.log('✅ FIXED: Plastic bottles → Index 0 (correctly labeled as Recyclable)')
-  console.log('🔧 SOLUTION: Corrected class mapping to match model output')
+  console.log('\nISSUE RESOLUTION:')
+  console.log('PREVIOUS: Plastic bottles → Index 0 (wrongly labeled as Organic)')
+  console.log('FIXED: Plastic bottles → Index 0 (correctly labeled as Recyclable)')
+  console.log('SOLUTION: Corrected class mapping to match model output')
   
-  console.log('\n🔍 NEXT STEPS:')
+  console.log('\nNEXT STEPS:')
   console.log('1. Test with plastic bottle images')
   console.log('2. Verify plastic bottles are now classified as "Recyclable Waste"')
   console.log('3. Check that confidence levels are reasonable (>60%)')
@@ -487,7 +466,7 @@ export function verifyClassMapping() {
 
 // Quick fix function to switch to alternative mapping
 export function switchToAlternativeMapping() {
-  console.log('🔄 SWITCHING TO ALTERNATIVE CLASS MAPPING')
+  console.log('SWITCHING TO ALTERNATIVE CLASS MAPPING')
   
   // Temporarily store current mapping
   const originalMapping = { ...CLASS_NAMES }
@@ -496,33 +475,33 @@ export function switchToAlternativeMapping() {
   CLASS_NAMES.en = [...ALT_CLASS_NAMES.en]
   CLASS_NAMES.id = [...ALT_CLASS_NAMES.id]
   
-  console.log('✅ Switched to alternative mapping:')
+  console.log('Switched to alternative mapping:')
   console.log('Index 0 →', CLASS_NAMES.en[0])
   console.log('Index 1 →', CLASS_NAMES.en[1])
   console.log('Index 2 →', CLASS_NAMES.en[2])
   
-  console.log('\n⚠️ Note: This is temporary. Reload page to revert.')
-  console.log('⚠️ If this fixes the issue, update the code permanently.')
+  console.log('\nNote: This is temporary. Reload page to revert.')
+  console.log('If this fixes the issue, update the code permanently.')
   
   return { previous: originalMapping, current: CLASS_NAMES }
 }
 
 // Quick verification function for users
 export function checkFixStatus() {
-  console.log('🔧 WASTE CLASSIFICATION FIX STATUS')
+  console.log('WASTE CLASSIFICATION FIX STATUS')
   console.log('================================')
-  console.log('✅ Issue: RESOLVED')
-  console.log('✅ Class mapping: CORRECTED')
-  console.log('✅ Plastic bottles: Will now be classified as Recyclable Waste')
-  console.log('✅ Model accuracy: IMPROVED')
+  console.log('Issue: RESOLVED')
+  console.log('Class mapping: CORRECTED')
+  console.log('Plastic bottles: Will now be classified as Recyclable Waste')
+  console.log('Model accuracy: IMPROVED')
   console.log('')
-  console.log('📝 Summary of changes:')
+  console.log('Summary of changes:')
   console.log('- Fixed class index mapping')
   console.log('- Updated waste management recommendations')
   console.log('- Enhanced debug logging')
   console.log('- Improved accuracy for plastic waste detection')
   console.log('')
-  console.log('🧪 To verify: Upload a plastic bottle image and check classification')
+  console.log('To verify: Upload a plastic bottle image and check classification')
   
   return {
     status: 'FIXED',

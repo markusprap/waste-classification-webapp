@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 // Dynamically import the ClassifyPageContent to avoid SSR issues
 const ClassifyPageContent = dynamicImport(
-  () => import("@/components/classify/classify-page-content").then(mod => ({ default: mod.ClassifyPageContent })),
+  () => import("@/components/features/classification/classify-page-content").then(mod => ({ default: mod.ClassifyPageContent })),
   { 
     ssr: false,
     loading: () => (

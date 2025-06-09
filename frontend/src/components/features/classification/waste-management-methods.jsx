@@ -1,7 +1,7 @@
 "use client"
 
 import { Recycle, Leaf, Trash2, RotateCcw } from "lucide-react"
-import { useLanguage } from "@/context/language-context"
+import { useLanguage } from "@/models/language-context"
 
 const methods = [
   {

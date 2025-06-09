@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-config';
-import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
@@ -14,32 +13,22 @@ export async function GET() {
       );
     }
 
-    // Get user data from database
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        image: true,
-        plan: true,
-        usageCount: true,
-        usageLimit: true,
-        lastUsageReset: true,
-        createdAt: true
-      }
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
+    // Return user data from session
+    // Since we've moved the database to backend, we'll just use session data
+    const user = {
+      id: session.user.id || 'user-id',
+      email: session.user.email,
+      name: session.user.name,
+      image: session.user.image,
+      plan: session.user.plan || 'free',
+      usageCount: session.user.usageCount || 0,
+      usageLimit: session.user.usageLimit || 100,
+      lastUsageReset: session.user.lastUsageReset || new Date().toISOString()
+    };
 
     return NextResponse.json({
       success: true,
-      user
+      user: user
     });
 
   } catch (error) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/auth-context';
-import { useLanguage } from '@/context/language-context';
+import { useAuth } from '@/models/auth-context';
+import { useLanguage } from '@/models/language-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

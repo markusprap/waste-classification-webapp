@@ -10,8 +10,8 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from "@/components/ui/alert-dialog"
-import { useLanguage } from "@/context/language-context"
-import { InteractiveMap } from "../shared/interactive-map"
+import { useLanguage } from "@/models/language-context"
+import { InteractiveMap } from "../maps/interactive-map"
 import { MapPin, CheckCircle, AlertTriangle } from "lucide-react"
 import { useState, useEffect } from "react"
 
@@ -21,12 +21,10 @@ export function MapSection({ initialUserLocation, onLocationUpdate }) {
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const [showErrorDialog, setShowErrorDialog] = useState(false)
-  const [locationData, setLocationData] = useState(null)
-  const [errorMessage, setErrorMessage] = useState("")
+  const [locationData, setLocationData] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Load saved location on mount
   useEffect(() => {
-    // Check for initial location passed from parent
     if (initialUserLocation) {
       setUserLocation(initialUserLocation)
       if (onLocationUpdate) {
@@ -35,22 +33,19 @@ export function MapSection({ initialUserLocation, onLocationUpdate }) {
       return
     }
 
-    // Check session storage for saved location
     try {
       const savedLocation = sessionStorage.getItem('userLocation')
       if (savedLocation) {
         const parsedLocation = JSON.parse(savedLocation)
-        console.log('📍 Loading saved user location:', parsedLocation)
         setUserLocation(parsedLocation)
         if (onLocationUpdate) {
           onLocationUpdate(parsedLocation)
         }
       }
     } catch (error) {
-      console.error('❌ Error loading saved location:', error)
+      console.error('Error loading saved location:', error)
     }
   }, [initialUserLocation, onLocationUpdate])
-
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       setIsGettingLocation(true)
@@ -65,17 +60,14 @@ export function MapSection({ initialUserLocation, onLocationUpdate }) {
             onLocationUpdate(location)
           }
 
-          // Save location to session storage
           try {
             sessionStorage.setItem('userLocation', JSON.stringify(location))
-            console.log('💾 User location saved to session storage')
           } catch (error) {
-            console.error('❌ Error saving location to session storage:', error)
+            console.error('Error saving location to session storage:', error)
           }
 
           setIsGettingLocation(false)
 
-          // Store location data for dialog
           setLocationData({ latitude, longitude })
           setShowSuccessDialog(true)
         },

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/context/auth-context';
-import { useLanguage } from '@/context/language-context';
+import { useAuth } from '@/models/auth-context';
+import { useLanguage } from '@/models/language-context';
 import { Button } from '@/components/ui/button';
 import { 
   AlertDialog, 

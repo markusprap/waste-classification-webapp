@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useLanguage } from '@/context/language-context';
+import { useLanguage } from '@/models/language-context';
 import { Button } from '@/components/ui/button';
 import { 
   AlertDialog, 
@@ -16,18 +16,19 @@ export default function AuthDialog({ isOpen, onClose }) {
   const { language } = useLanguage();
   const [loading, setLoading] = useState(false);  const handleSignIn = async (providerId) => {
     setLoading(true);
-    try {
-      // Get current URL to ensure we return to the same port
+    try {      // Get current URL to ensure we return to the same port
       const callbackUrl = window.location.origin;
       
       // For Google provider, redirect to a URL that forces account selection
+      // The redirect: true option ensures we bypass the signin page
       if (providerId === 'google') {
         await signIn(providerId, { 
           callbackUrl,
-          prompt: 'select_account'  // This forces Google to show the account selection screen
+          prompt: 'select_account',  // This forces Google to show the account selection screen
+          redirect: true
         });
       } else {
-        await signIn(providerId, { callbackUrl });
+        await signIn(providerId, { callbackUrl, redirect: true });
       }
     } catch (error) {
       console.error('Sign in error:', error);

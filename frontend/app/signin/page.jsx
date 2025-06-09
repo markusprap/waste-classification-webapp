@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-config';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SignInButton } from '@/components/auth/signin-button';
+import { SignInButton } from '@/components/features/auth/signin-button';
 
 export const dynamic = 'force-dynamic'
 

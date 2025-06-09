@@ -1,4 +1,4 @@
-import TeamPageContent from "@/components/team/team-page-content";
+import TeamPageContent from "@/components/features/team/team-page-content";
 
 // Disable static optimization for this page because it might use auth context
 export const dynamic = 'force-dynamic'

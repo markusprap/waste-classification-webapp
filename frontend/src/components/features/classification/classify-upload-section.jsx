@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { Upload, Camera, X, Loader2, CameraIcon, Image, Lock } from "lucide-react"
+import { Upload, Camera, X, Loader2, CameraIcon, Image } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useLanguage } from "@/context/language-context"
-import { useAuth } from "@/context/auth-context"
+import { useLanguage } from "@/models/language-context"
+// Temporarily removed auth dependency for pure login development
+// import { useAuth } from "@/models/auth-context"
 import { ClassificationResultCard } from "./classification-result-card"
 import { classifyWasteImage } from "@/lib/tensorflow-model"
 import dynamic from "next/dynamic"
@@ -12,9 +13,9 @@ import dynamic from "next/dynamic"
 // Dynamically import Webcam to avoid SSR issues
 const Webcam = dynamic(() => import("react-webcam"), { ssr: false })
 
-export function ClassifyUploadSection({ initialClassificationData, onClassificationUpdate }) {
-  const { t, language } = useLanguage()
-  const { user, isAuthenticated, classify } = useAuth()
+export function ClassifyUploadSection({ initialClassificationData, onClassificationUpdate }) {  const { t, language } = useLanguage()
+  // Temporarily removed auth for pure login development
+  // const { user, isAuthenticated, classify } = useAuth()
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
   const webcamRef = useRef(null)
@@ -27,10 +28,9 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
   const [error, setError] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
   const [showWebcam, setShowWebcam] = useState(false)
-
   // Initialize with data from home page when it's available
   useEffect(() => {
-    console.log('🏠 ClassifyUploadSection - Initializing with auth state:', { isAuthenticated, user });
+    console.log('🏠 ClassifyUploadSection - Initializing without auth for pure login development');
     
     if (initialClassificationData) {
       console.log('🏠 ClassifyUploadSection - Initializing with home page data:', initialClassificationData);
@@ -84,7 +84,7 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
       setSelectedImage(e.target.result);
     };
     reader.onerror = (e) => {
-      console.error('❌ Error reading file:', e);
+      console.error('Error reading file:', e);
       setError(language === "id" ? "Gagal membaca gambar" : "Failed to read image");
     };
     reader.readAsDataURL(file);
@@ -164,62 +164,47 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
   const cancelWebcam = () => {
     setShowWebcam(false)
   }
-
   const classifyWaste = useCallback(async () => {
     if (!selectedFile) {
-      console.log('❌ ClassifyWaste - No file selected');
+      console.log('ClassifyWaste - No file selected');
       return;
     }
 
-    console.log('🔍 ClassifyWaste - Starting classification with auth state:', { isAuthenticated, user });
+    console.log('ClassifyWaste - Starting classification without auth for pure login development');
     
     setIsClassifying(true);
     setError(null);
 
     try {
-      console.log('🔍 ClassifyWaste - Processing file:', selectedFile.name);
+      console.log('ClassifyWaste - Processing file:', selectedFile.name);
       
       // Convert file to base64 for API
       const reader = new FileReader();
       reader.onload = async (e) => {
         const imageData = e.target.result;
         
-        // Check authentication again before calling API
-        if (!isAuthenticated) {
-          console.log('❌ ClassifyWaste - User not authenticated');
-          setError(language === "id" 
-            ? "Anda perlu login untuk mengklasifikasi sampah" 
-            : "You need to login to classify waste");
-          setIsClassifying(false);
-          return;
-        }
-        
-        // Use auth context's classify method which handles API call and usage tracking
-        console.log('🔍 ClassifyWaste - Calling classify method from auth context');
-        const result = await classify(imageData, null); // We'll add location later if needed
-        
-        if (result.success) {
-          console.log('✅ ClassifyWaste - Classification successful:', result.data);
-          setClassificationResult(result.data.classification);
+        // Use demo API route without authentication
+        console.log('ClassifyWaste - Calling demo API route');
+        const response = await fetch('/api/classify-demo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ imageData, location: null }),
+        });
+
+        const data = await response.json();
+        console.log('ClassifyWaste - Demo API response:', data);
+
+        if (response.ok && data.success) {
+          console.log('ClassifyWaste - Classification successful:', data.classification);
+          setClassificationResult(data.classification);
           if (onClassificationUpdate) {
-            onClassificationUpdate(result.data.classification);
+            onClassificationUpdate(data.classification);
           }
         } else {
-          console.error('❌ ClassifyWaste - Classification failed:', result.error, result.statusCode);
-          
-          if (result.statusCode === 429) {
-            const errorMessage = language === "id" 
-              ? "Batas klasifikasi harian tercapai. Upgrade plan Anda untuk lebih banyak klasifikasi."
-              : "Daily classification limit reached. Please upgrade your plan for more classifications.";
-            setError(errorMessage);
-          } else if (result.error === 'Authentication required') {
-            const errorMessage = language === "id"
-              ? "Anda perlu login untuk mengklasifikasi sampah"
-              : "You need to login to classify waste";
-            setError(errorMessage);
-          } else {
-            setError(result.error || 'Classification failed');
-          }
+          console.error('ClassifyWaste - Classification failed:', data.error);
+          setError(data.error || 'Classification failed');
           
           // Fallback result in case of error
           const fallbackResult = {
@@ -235,18 +220,19 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
             recommendation: "Consider manual sorting or ask waste management professionals",
             recommendationId: "Pertimbangkan pemisahan manual atau tanya profesional pengelolaan sampah",
             method: "reduce",
-          }
+          };
           
-          setClassificationResult(fallbackResult)
+          setClassificationResult(fallbackResult);
           if (onClassificationUpdate) {
-            onClassificationUpdate(fallbackResult)
+            onClassificationUpdate(fallbackResult);
           }
         }
-      }
-      reader.readAsDataURL(selectedFile)
+      };
+      
+      reader.readAsDataURL(selectedFile);
       
     } catch (error) {
-      console.error("❌ Classification error:", error)
+      console.error("Classification error:", error)
       setError(`Classification failed: ${error.message}`)
       
       const fallbackResult = {
@@ -271,7 +257,7 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
     } finally {
       setIsClassifying(false)
     }
-  }, [selectedFile, onClassificationUpdate, language, classify])
+  }, [selectedFile, onClassificationUpdate, language])
 
   const resetUpload = useCallback(() => {
     setSelectedImage(null)
@@ -472,44 +458,11 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                 <div className="mx-6 mb-4 bg-red-50 border border-red-200 rounded-xl p-4">
                   <p className="text-red-800 text-sm font-medium">{error}</p>
                 </div>
-              )}
-
-              {/* Classify Button - SAME AS HOME PAGE */}
+              )}              {/* Classify Button - WITHOUT AUTH FOR PURE LOGIN DEVELOPMENT */}
               {selectedImage && (
                 <div className="p-6 bg-gray-50 border-t">
-                  {!isAuthenticated && (
-                    <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="flex items-center space-x-2">
-                        <Lock className="w-4 h-4 text-blue-600" />
-                        <p className="text-blue-800 text-sm">
-                          {language === "id" 
-                            ? "Login diperlukan untuk menggunakan fitur klasifikasi AI" 
-                            : "Login required to use AI classification feature"
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {isAuthenticated && user?.plan === 'free' && (
-                    <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                      <p className="text-yellow-800 text-sm">
-                        {language === "id" 
-                          ? `Sisa klasifikasi hari ini: ${Math.max(0, 100 - (user?.usageCount || 0))}/100` 
-                          : `Remaining classifications today: ${Math.max(0, 100 - (user?.usageCount || 0))}/100`
-                        }
-                      </p>
-                      {user?.usageCount >= 100 && (
-                        <p className="text-yellow-800 text-xs mt-1">
-                          {language === "id" 
-                            ? "Upgrade ke Premium untuk 50 klasifikasi/hari!" 
-                            : "Upgrade to Premium for 50 classifications/day!"
-                          }
-                        </p>
-                      )}
-                    </div>
-                  )}
-
+                  {/* Temporarily removed auth UI for pure login development */}
+                  
                   {isClassifying ? (
                     <div className="flex items-center justify-center space-x-2 py-2">
                       <Loader2 className="w-5 h-5 animate-spin text-green-600" />
@@ -520,21 +473,9 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                   ) : (
                     <button
                       onClick={classifyWaste}
-                      disabled={isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100}
-                      className={`w-full px-6 py-3 rounded-lg transition-colors font-medium ${
-                        !isAuthenticated 
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                          : isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-black hover:bg-gray-800 text-white'
-                      }`}
+                      className="w-full px-6 py-3 rounded-lg transition-colors font-medium bg-black hover:bg-gray-800 text-white"
                     >
-                      {!isAuthenticated 
-                        ? (language === "id" ? "Login untuk Klasifikasi" : "Login to Classify")
-                        : isClassifying
-                          ? (language === "id" ? "Menganalisis..." : "Analyzing...")
-                          : (language === "id" ? "Klasifikasi dengan AI" : "Classify with AI")
-                      }
+                      {language === "id" ? "Klasifikasi dengan AI" : "Classify with AI"}
                     </button>
                   )}
                 </div>
