@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: waste-classification-api
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        value: file:./prod.db
+      - key: JWT_SECRET
+        value: 3e909006caafbf366249f6b23b45894d
+      - key: MIDTRANS_CLIENT_KEY
+        value: SB-Mid-client-1AwEzlr8EfunHLj3
+      - key: MIDTRANS_SERVER_KEY
+        value: SB-Mid-server-la0w2G9_au79UZl0mSqnhZvO
+      - key: MIDTRANS_MERCHANT_ID
+        value: G932456516
+      - key: MIDTRANS_ENV
+        value: sandbox
+      - key: FRONTEND_URL
+        value: https://waste-classification-webapp-df57xyk6m-markuspraps-projects.vercel.app
+      - key: ML_SERVICE_URL
+        value: https://waste-classification-ml.onrender.com
+
+  - type: web
+    name: waste-classification-ml
+    env: python
+    buildCommand: cd ml-service && pip install -r requirements.txt
+    startCommand: cd ml-service && python app.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: API_URL
+        value: https://waste-classification-api.onrender.com

@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
-  },
-  "dependencies": {
+  },  "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
@@ -48,17 +47,15 @@
     "dotenv": "^16.5.0",
     "embla-carousel-react": "8.5.1",
     "input-otp": "1.4.1",
-    "jsonwebtoken": "^9.0.2",
-    "leaflet": "latest",
-    "lucide-react": "^0.454.0",
-    "midtrans-client": "^1.4.3",
-    "next": "15.2.4",
+    "jsonwebtoken": "^9.0.2",    "leaflet": "latest",
+    "lucide-react": "^0.454.0",    "midtrans-client": "^1.4.3",
+    "next": "14.1.0",
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.4",
     "query-string": "^9.2.0",
-    "react": "^19",
+    "react": "^18.2.0",
     "react-day-picker": "8.10.1",
-    "react-dom": "^19",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.54.1",
     "react-resizable-panels": "^2.1.7",
     "react-webcam": "^7.2.0",
@@ -68,11 +65,10 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
     "zod": "^3.24.1"
-  },
-  "devDependencies": {
+  },  "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
