@@ -22,15 +22,17 @@ export function Footer() {
 
           <div>
             <h3 className="mb-4 text-lg font-medium">{t("footer.quickLinks")}</h3>
-            <nav className="flex flex-col space-y-2">
-              <Link href="/" className="text-gray-400 hover:text-white">
+            <nav className="flex flex-col space-y-2">              <Link href="/" className="text-gray-400 hover:text-white">
                 {t("home")}
               </Link>
               <Link href="/classify" className="text-gray-400 hover:text-white">
                 {t("classify")}
               </Link>
-              <Link href="/team" className="text-gray-400 hover:text-white">
+              <Link href="/about" className="text-gray-400 hover:text-white">
                 {t("team")}
+              </Link>
+              <Link href="/blog" className="text-gray-400 hover:text-white">
+                {t("blog")}
               </Link>
             </nav>
           </div>

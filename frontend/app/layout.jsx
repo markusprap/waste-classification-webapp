@@ -1,7 +1,8 @@
 import "./globals.css"
 import { Inter } from "next/font/google"
-import { Providers } from "@/components/providers"
-import { ThemeProvider } from "@/components/theme-provider"
+import { Providers } from "../src/components/providers"
+import { ThemeProvider } from "../src/components/theme-provider"
+import { NavigationLoader } from "../src/components/navigation-loader"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,6 +23,7 @@ export default function RootLayout({ children }) {
           disableTransitionOnChange
         >
           <Providers>
+            <NavigationLoader />
             {children}
           </Providers>
         </ThemeProvider>

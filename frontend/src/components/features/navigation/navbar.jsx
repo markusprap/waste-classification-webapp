@@ -33,22 +33,21 @@ export function Navbar() {
       setUserDashboardOpen(true)
     } else {
       setAuthDialogOpen(true)
-    }
-  }
+      }
+}
 
-  const handleAuthModeSwitch = (mode) => {
-    setAuthMode(mode)
-  }
+const handleAuthModeSwitch = (mode) => {
+  setAuthMode(mode);
+};
 
-  const navLinks = [
+const navLinks = [
     { href: "/", label: t("home") },
     { href: "/classify", label: t("classify") },
-    { href: "/team", label: t("team") },
+    { href: "/about", label: t("team") },
     { href: "/blog", label: t("blog") }
   ]
-
   return (
-    <header className="w-full border-b border-gray-200 bg-white">
+    <header className="w-full border-b border-gray-200 bg-white sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}

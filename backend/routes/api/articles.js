@@ -1,6 +1,5 @@
 const { storeArticleImage, deleteArticleImage } = require('../../utils/image-storage');
 const os = require('os');
-// Prisma is available via server.app.prisma
 
 const slugify = (text) => {
   return text
@@ -148,54 +147,18 @@ const routes = [
       }    },
     handler: async (request, h) => {
       try {
-        console.log('Received payload keys:', Object.keys(request.payload));
-        console.log('Content-Type header:', request.headers['content-type']);
-        
         const { title, content, excerpt, category, tags, author } = request.payload;
-        const coverImage = request.payload.coverImage;
-        const imageFile = request.payload.file;
-        
-        console.log('Received file data:', {
-          coverImage: coverImage ? { 
-            type: typeof coverImage,
-            isString: typeof coverImage === 'string',
-            isObject: typeof coverImage === 'object',
-            length: coverImage?.length
-          } : null,
-          imageFile: imageFile ? {
-            type: typeof imageFile,
-            hapi: !!imageFile.hapi,
-            size: imageFile.size,
-            filename: imageFile.hapi?.filename
-          } : null
-        });
-        
-        if (!title) {
-          console.log('Article creation failed: Title is required');
-          return h.response({ error: 'Title is required' }).code(400);
-        }
-        
-        // Validate content
-        if (!content) {
-          console.log('Article creation failed: Content is required');
-          return h.response({ error: 'Content is required' }).code(400);
-        }
+        const file = request.payload.file;
 
-        // Log for debugging
-        console.log('Processing article creation:', {
-          title,
-          hasCoverImage: !!coverImage,
-          hasImageFile: !!imageFile,
-          coverImageType: coverImage ? typeof coverImage : null,
-          imageFileType: imageFile ? typeof imageFile : null
-        });
+        if (!title || !content) {
+          return h.response({
+            success: false,
+            error: 'Title and content are required'
+          }).code(400);
+        }
 
         // Generate unique slug
         const slug = slugify(title);
-
-        console.log('Generated slug:', slug);
-        
-        // Optional: Check if slug already exists and append number if needed
         const existingArticleCount = await request.server.app.prisma.article.count({
           where: {
             slug: {
@@ -203,121 +166,64 @@ const routes = [
             }
           }
         });
+        const finalSlug = existingArticleCount > 0 ? `${slug}-${existingArticleCount + 1}` : slug;
 
-        const finalSlug = existingArticleCount > 0 ? `${slug}-${existingArticleCount + 1}` : slug;        // Handle cover image if provided
-        let imageData = null;        try {
-          // First try to handle imageFile from FormData
-          if (imageFile && imageFile.hapi) {
-            console.log('Processing uploaded file from FormData:', {
-              filename: imageFile.hapi.filename,
-              contentType: imageFile.hapi.headers['content-type'],
-              bytes: imageFile.hapi.bytes
-            });
-            imageData = await storeArticleImage(imageFile);
-            console.log('Image processed successfully:', imageData);
-          } 
-          // Then try coverImage if no imageFile
-          else if (coverImage) {
-            if (typeof coverImage === 'string') {
-              // Handle URL string (either from local upload or external URL)
-              console.log('Processing coverImage as URL:', coverImage);
-              if (coverImage.startsWith('/uploads/')) {
-                // Local file URL from frontend upload
-                const filename = coverImage.split('/').pop();
-                imageData = {
-                  filename,
-                  originalname: filename,
-                  mimetype: filename.endsWith('.jpg') || filename.endsWith('.jpeg') ? 'image/jpeg' : 
-                           filename.endsWith('.png') ? 'image/png' : 'image/gif',
-                  size: 0
-                };
-                console.log('Using local file data:', imageData);
-              } else {
-                // External URL or other string
-                imageData = await storeArticleImage(coverImage);
-                console.log('Created imageData from URL:', imageData);
-              }
-            } else if (typeof coverImage === 'object') {
-              // Handle file object
-              console.log('Processing coverImage as file object:', {
-                type: coverImage.type || coverImage.mimetype,
-                size: coverImage.size,
-                name: coverImage.name || coverImage.filename
-              });
-              imageData = await storeArticleImage(coverImage);
-              console.log('CoverImage processed successfully:', imageData);
-            }
+        // Handle file upload if provided
+        let imageData = null;
+        if (file) {
+          try {
+            imageData = await storeArticleImage(file);
+          } catch (error) {
+            console.error('Error processing image:', error);
+            return h.response({
+              success: false,
+              error: 'Failed to process image'
+            }).code(400);
           }
-        } catch (error) {
-          console.error('Error processing image:', error, error.stack);
-          // Continue without image if there's an error
         }
 
-        console.log('Final image data:', imageData);
-
-        // Create article with all required fields
+        // Create article with all fields
         const articleData = {
           title,
           slug: finalSlug,
           content,
-          excerpt,
-          category,
-          tags,
+          excerpt: excerpt || '',
+          category: category || 'Uncategorized',
+          tags: tags || '',
           author: author || 'Tim EcoWaste',
-          readTime: parseInt(request.payload.readTime) || 5,
-          isPublished: true
+          readTime: 5,
+          isPublished: true,
+          ...(imageData && {
+            coverImage: imageData.filename,
+            coverOriginalName: imageData.originalname,
+            coverSize: imageData.size,
+            coverType: imageData.mimetype
+          })
         };
-        
-        // Add image data if available
-        if (imageData) {
-          articleData.coverImage = imageData.filename;
-          if (imageData.originalname) articleData.coverOriginalName = imageData.originalname;
-          if (imageData.size) articleData.coverSize = imageData.size;
-          if (imageData.mimetype) articleData.coverType = imageData.mimetype;
-        }
-        
-        console.log('Creating article with data:', {
-          title: articleData.title,
-          slug: articleData.slug,
-          category: articleData.category,
-          hasCoverImage: !!articleData.coverImage
-        });        try {
-          // Create article
-          console.log('Creating article with data:', articleData);
-          const article = await request.server.app.prisma.article.create({
-            data: articleData
-          });
 
-          console.log('Article created successfully:', article.id);
-          return {
-            success: true,
-            article
-          };
-        } catch (prismaError) {
-          console.error('Prisma error creating article:', prismaError);
-          throw prismaError; // Re-throw to be caught by outer catch
-        }
+        const article = await request.server.app.prisma.article.create({
+          data: articleData
+        });
+
+        return {
+          success: true,
+          article
+        };
+
       } catch (error) {
         console.error('Error creating article:', error);
-        console.error('Error stack:', error.stack);
         
-        // Log more details to help debug
-        if (error.code) {
-          console.error('Error code:', error.code);
+        if (error.code === 'P2002') {
+          return h.response({
+            success: false,
+            error: 'Article with this title already exists'
+          }).code(400);
         }
-        
-        // Check for common Prisma errors
-        if (error.name === 'PrismaClientKnownRequestError') {
-          console.error('Prisma error code:', error.code);
-          console.error('Prisma error message:', error.message);
-          
-          // Handle specific Prisma errors
-          if (error.code === 'P2002') {
-            return h.response({ error: 'Article with this title already exists' }).code(400);
-          }
-        }
-        
-        return h.response({ error: 'Failed to create article' }).code(500);
+
+        return h.response({
+          success: false,
+          error: 'Failed to create article'
+        }).code(500);
       }
     }
   },  // PUT /api/v1/articles/{id}

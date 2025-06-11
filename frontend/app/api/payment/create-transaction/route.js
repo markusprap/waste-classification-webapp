@@ -1,99 +1,125 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-config';
+import { authOptions } from '@/services/auth-config';
+import { generateOrderId } from '@/services/midtransService';
 
-// Helper function to create basic auth header
-const createBasicAuthHeader = (serverKey) => {
-  const auth = Buffer.from(serverKey + ':').toString('base64');
-  return `Basic ${auth}`;
-};
-
-// Create Midtrans transaction
+// Create Midtrans transaction via backend API
 export async function POST(request) {
   try {
-    // Ensure user is authenticated
+    // Get and validate session
     const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { 
+          success: false, 
+          error: 'Authentication required' 
+        },
         { status: 401 }
       );
     }
-    
-    // Get transaction details from request
-    const { orderId, amount, customerDetails } = await request.json();
-    
-    // Validate required fields
-    if (!orderId || !amount || !customerDetails) {
+
+    // Parse and validate request body
+    const body = await request.json();
+    const { plan, email, name } = body;
+
+    if (!plan || !email || !name) {
       return NextResponse.json(
-        { error: 'Missing required transaction details' },
+        { 
+          success: false, 
+          error: 'Missing required fields' 
+        },
         { status: 400 }
       );
+    }    // Validate that email matches session user
+    if (email !== session.user.email) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Invalid user email' 
+        },
+        { status: 403 }
+      );
     }
-    
-        // Prepare transaction parameters
-    const parameter = {
-      transaction_details: {
-        order_id: orderId,
-        gross_amount: amount
-      },
-      customer_details: {
-        first_name: customerDetails.first_name,
-        last_name: customerDetails.last_name,
-        email: customerDetails.email
-      },
-      item_details: [
-        {
-          id: 'premium-plan',
-          name: 'WasteWise AI Premium Plan',
-          price: amount,
-          quantity: 1
+
+    // Generate order ID and create transaction
+    const orderId = generateOrderId();
+    const amount = 99000; // 99,000 IDR for premium plan
+
+    // Make call to backend API - let backend handle user verification
+    try {
+      const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001'; // Reverted back to original port
+      const backendResponse = await fetch(`${backendUrl}/api/payment/create-transaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          fullName: name,
+          plan: plan,
+          amount: amount
+        })
+      });
+
+      if (!backendResponse.ok) {
+        let errorMessage = 'Backend API error';
+        try {
+          const errorData = await backendResponse.json();
+          console.error(`Backend API error ${backendResponse.status}:`, errorData);
+          
+          if (errorData.message && errorData.message.includes('User verification failed')) {
+            // Special handling for user verification errors
+            return NextResponse.json(
+              {
+                success: false,
+                error: 'User verification failed. Please log out and log in again.'
+              },
+              { status: 401 }
+            );
+          }
+          
+          errorMessage = errorData.message || `Backend API error (${backendResponse.status})`;
+        } catch (e) {
+          const errorText = await backendResponse.text();
+          console.error(`Backend API error ${backendResponse.status}:`, errorText);
+          errorMessage = `Backend API error (${backendResponse.status})`;
         }
-      ],
-      callbacks: {
-        finish: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment/success`,
-        error: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment/error`,
-        pending: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/payment/pending`
-      }
-    };
-    
-    // Set up request to Midtrans API
-    const isProduction = process.env.NODE_ENV === 'production';
-    const serverKey = process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-GwUP_WGbJPXsDzsNEBRs8IYA';
-    const baseUrl = isProduction
-      ? 'https://app.midtrans.com/snap/v1'
-      : 'https://app.sandbox.midtrans.com/snap/v1';
+        
+        throw new Error(errorMessage);
+      }      const backendResult = await backendResponse.json();
       
-    // Create transaction
-    const response = await fetch(`${baseUrl}/transactions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': createBasicAuthHeader(serverKey),
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(parameter)
-    });
-    
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Midtrans API error:', error);
-      throw new Error('Failed to create transaction');
+      if (backendResult.status !== 'success' || !backendResult.data?.token) {
+        console.error('Invalid backend transaction result:', backendResult);
+        throw new Error('Failed to get payment token from backend');
+      }      // Backend already handles database operations, just return the token
+      return NextResponse.json({
+        success: true,
+        data: {
+          token: backendResult.data.token,
+          redirect_url: backendResult.data.redirect_url,
+          order_id: backendResult.data.order_id
+        }
+      });
+
+    } catch (error) {
+      console.error('Payment creation error:', error);
+
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'Failed to create payment transaction' 
+        },
+        { status: 500 }
+      );
     }
-    
-    const transaction = await response.json();
-    
-    // Return token for Snap
-    return NextResponse.json({
-      success: true,
-      token: transaction.token,
-      redirect_url: transaction.redirect_url
-    });
+
   } catch (error) {
-    console.error('Create transaction error:', error);
+    console.error('Server error:', error);
     return NextResponse.json(
-      { error: 'Failed to create payment transaction' },
+      { 
+        success: false,
+        error: 'Internal server error' 
+      },
       { status: 500 }
     );
   }

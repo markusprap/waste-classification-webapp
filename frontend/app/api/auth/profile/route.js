@@ -8,7 +8,11 @@ export async function GET() {
     
     if (!session || !session.user) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { 
+          success: false,
+          error: 'Authentication required',
+          user: null
+        },
         { status: 401 }
       );
     }
@@ -16,10 +20,10 @@ export async function GET() {
     // Return user data from session
     // Since we've moved the database to backend, we'll just use session data
     const user = {
-      id: session.user.id || 'user-id',
-      email: session.user.email,
-      name: session.user.name,
-      image: session.user.image,
+      id: session.user.id || 'guest-user',
+      email: session.user.email || 'guest@example.com',
+      name: session.user.name || 'Guest User',
+      image: session.user.image || null,
       plan: session.user.plan || 'free',
       usageCount: session.user.usageCount || 0,
       usageLimit: session.user.usageLimit || 100,

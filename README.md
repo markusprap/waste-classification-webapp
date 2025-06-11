@@ -10,12 +10,15 @@ Upload a photo of waste and the AI will tell you what type it is (organic, recyc
 - Image-based waste classification
 - Real-time predictions
 - Educational resources on waste management
+- User subscription plans (Free and Premium)
+- Secure payment processing with Midtrans
 
 ## Technologies Used
 
 - Python (Flask, TensorFlow/Keras)
 - JavaScript (React.js, Next.js, Tailwind CSS)
 - Node.js & Express.js
+- Midtrans Payment Gateway
 
 ## Getting Started
 
@@ -40,6 +43,25 @@ Upload a photo of waste and the AI will tell you what type it is (organic, recyc
     ```bash
     python app.py
     ```
+
+## Subscription Plans
+
+The application offers two subscription plans:
+
+- **Free Plan**: Limited to 30 waste classifications per month
+- **Premium Plan**: Unlimited classifications for Rp 10,000 per month
+
+## Payment System
+
+The payment system is implemented using Midtrans as the payment gateway:
+
+1. Users can upgrade from Free to Premium plan in the user dashboard
+2. Payment is processed securely through Midtrans
+3. Users receive immediate access to Premium features upon successful payment
+
+For detailed information about the payment implementation, see:
+- [Payment System Documentation](./docs/PAYMENT_SYSTEM.md)
+- [Midtrans Testing Guide](./docs/MIDTRANS_TESTING_GUIDE.md)
 
 ## Contributors
 

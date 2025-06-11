@@ -1,98 +1,54 @@
 import { NextResponse } from 'next/server';
-import midtransClient from 'midtrans-client';
-import { prisma } from '@/lib/prisma';
 
-// Initialize Midtrans Core API
-const initMidtransCore = () => {
-  return new midtransClient.CoreApi({
-    isProduction: process.env.NODE_ENV === 'production',
-    serverKey: process.env.MIDTRANS_SERVER_KEY || 'SB-Mid-server-GwUP_WGbJPXsDzsNEBRs8IYA',
-    clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || 'SB-Mid-client-61XuGAwQ8Bj8LxSS'
-  });
-};
-
-// Handle notification from Midtrans
+/**
+ * Handle Midtrans payment notifications
+ * This endpoint receives notifications from Midtrans and forwards them to the backend
+ */
 export async function POST(request) {
   try {
-    // Get notification body
-    const notificationBody = await request.json();
-    console.log('Received notification from Midtrans:', notificationBody);
+    // Get notification data from request body
+    const notificationData = await request.json();
+    console.log('Received Midtrans notification:', JSON.stringify(notificationData, null, 2));
+    console.log('Notification headers:', JSON.stringify(Object.fromEntries([...request.headers.entries()]), null, 2));
     
-    // Initialize Midtrans Core API
-    const core = initMidtransCore();
+    // Forward notification to backend
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    console.log(`Forwarding notification to ${backendUrl}/api/payment/notification`);
     
-    // Verify notification signature
-    const verificationResult = await core.transaction.notification(notificationBody);
-    console.log('Verification result:', verificationResult);
-    
-    // Extract important information
-    const orderId = verificationResult.order_id;
-    const transactionStatus = verificationResult.transaction_status;
-    const fraudStatus = verificationResult.fraud_status;
-    
-    // Extract user email from order ID (assuming order ID format is PREMIUM-timestamp-random-email)
-    const orderParts = orderId.split('-');
-    const userEmail = orderParts[orderParts.length - 1];
-    
-    // Handle different transaction status
-    if (transactionStatus === 'capture' || transactionStatus === 'settlement') {
-      if (fraudStatus === 'accept') {
-        // Payment success and not fraud - update user plan to premium
-        
-        // Find user by email or order ID (depending on your implementation)
-        const user = await prisma.user.findFirst({
-          where: {
-            email: userEmail
-          }
-        });
-        
-        if (user) {
-          // Update user plan to premium
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              plan: 'premium',
-              usageLimit: 1000, // Very high limit for premium
-              // Reset usage count
-              usageCount: 0,
-              lastUsageReset: new Date()
-            }
-          });
-          
-          // Record subscription
-          await prisma.subscription.create({
-            data: {
-              userId: user.id,
-              plan: 'premium',
-              startDate: new Date(),
-              // Set a 1 year validity for the subscription
-              endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-              paymentId: orderId,
-              paymentStatus: 'success'
-            }
-          });
-          
-          console.log(`User ${userEmail} upgraded to premium plan`);
-        } else {
-          console.error(`User with email ${userEmail} not found`);
-        }
+    const backendResponse = await fetch(`${backendUrl}/api/payment/notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Signature': request.headers.get('x-signature') || ''
+      },
+      body: JSON.stringify(notificationData)
+    });
+
+    if (!backendResponse.ok) {
+      console.error(`Backend returned error status: ${backendResponse.status}`);
+      let errorText = '';
+      try {
+        errorText = await backendResponse.text();
+        console.error('Backend error details:', errorText);
+      } catch (e) {
+        console.error('Could not read backend error response');
       }
-    } else if (transactionStatus === 'pending') {
-      // Payment is pending - you can record this status
-      console.log(`Payment for ${orderId} is pending`);
-    } else if (transactionStatus === 'deny' || 
-               transactionStatus === 'cancel' || 
-               transactionStatus === 'expire') {
-      // Payment failed - you can record this status
-      console.log(`Payment for ${orderId} failed or cancelled`);
+      throw new Error(`Backend error: ${backendResponse.status} - ${errorText}`);
     }
+
+    console.log('Successfully processed notification');
     
-    // Return success response to Midtrans
+    // Return success response as expected by Midtrans
     return NextResponse.json({ status: 'ok' });
   } catch (error) {
-    console.error('Error handling Midtrans notification:', error);
+    console.error('Error handling payment notification:', error);
+    
+    // Return error response in Midtrans expected format
     return NextResponse.json(
-      { error: 'Failed to process payment notification' },
+      { 
+        status: 'error',
+        message: 'Failed to process payment notification'
+      },
       { status: 500 }
     );
   }

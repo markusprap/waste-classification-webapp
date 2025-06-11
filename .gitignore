@@ -7,6 +7,7 @@
 # next.js
 /.next/
 /out/
+**/.next/
 
 # production
 /build
@@ -16,6 +17,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+**/server-debug*.log
 
 # env files
 .env*
@@ -29,10 +31,27 @@ next-env.d.ts
 /lib/generated/prisma
 
 # Backend files
-backend/logs/
-backend/temp/
-backend/uploads/
-backend/node_modules/
-backend/.env*
-backend/prisma/dev.db*
-backend/package-lock.json
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
+# Cache directories
+**/.cache/
+**/cache/
+
+# Upload directories
+**/public/uploads/
+**/uploads/
+
+# Backup files
+*.bak
+*.backup
+*.new
+
+# IDE files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db

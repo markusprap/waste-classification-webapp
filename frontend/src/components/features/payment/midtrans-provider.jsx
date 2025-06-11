@@ -5,35 +5,49 @@ import { useEffect } from 'react';
 export function MidtransProvider({ children }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    // For development, use sandbox
-    const isProduction = process.env.NODE_ENV === 'production';
-    const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || 'SB-Mid-client-61XuGAwQ8Bj8LxSS';
+    
+    // Use sandbox mode for testing
+    const isProduction = false;
+    const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
+    
+    if (!clientKey) {
+      console.error('NEXT_PUBLIC_MIDTRANS_CLIENT_KEY not found in environment variables');
+      return;
+    }
+    
+    // Remove existing script if any
+    const existingScript = document.querySelector('script[src*="snap.js"]');
+    if (existingScript) {
+      console.log('Found existing Midtrans script, removing it');
+      existingScript.remove();
+    }
+    
+    console.log('Loading Midtrans script with client key:', clientKey);
     
     // Create script element
     const script = document.createElement('script');
-    script.src = isProduction
+    script.src = isProduction 
       ? 'https://app.midtrans.com/snap/snap.js'
       : 'https://app.sandbox.midtrans.com/snap/snap.js';
     script.setAttribute('data-client-key', clientKey);
+    script.setAttribute('type', 'text/javascript');
     script.async = true;
     
-    // Add script to document
-    document.body.appendChild(script);
+    // Add onload handler to ensure script is loaded
+    script.onload = () => {
+      console.log('MidtransProvider: Snap script loaded successfully');
+    };
+    script.onerror = (error) => {
+      console.error('MidtransProvider: Failed to load Midtrans script', error);
+    };
     
-    // Create container for Snap
-    const container = document.createElement('div');
-    container.id = 'snap-container';
-    container.style.display = 'none';
-    document.body.appendChild(container);
+    // Add script to document
+    document.head.appendChild(script);
     
     return () => {
       // Clean up
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-      if (document.body.contains(container)) {
-        document.body.removeChild(container);
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
       }
     };
   }, []);

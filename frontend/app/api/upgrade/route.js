@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(request) {
   try {
-    // Get session instead of token verification
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user) {
@@ -44,26 +43,25 @@ export async function POST(request) {
       );
     }
 
-    // Update user plan
+    // Update user plan with standardized usage limit (10,000 for premium)
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         plan: plan,
-        usageLimit: plan === 'premium' ? 1000 : 30, // Very high limit for premium
-        // Reset usage count when upgrading
+        usageLimit: 10000, // Standardize with backend
         usageCount: 0,
         lastUsageReset: new Date()
       }
     });
 
-    // Record subscription in database (for tracking)
-    await prisma.subscription.create({
+    // Record subscription in database
+    const subscription = await prisma.subscription.create({
       data: {
         userId: user.id,
         plan: plan,
+        status: 'active',
         startDate: new Date(),
-        // Set a 1 year validity for the subscription
-        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+        endDate: new Date(new Date().setMonth(new Date().getMonth() + 1))
       }
     });
 
@@ -78,7 +76,11 @@ export async function POST(request) {
         plan: updatedUser.plan,
         usageCount: updatedUser.usageCount,
         usageLimit: updatedUser.usageLimit,
-        lastUsageReset: updatedUser.lastUsageReset
+        lastUsageReset: updatedUser.lastUsageReset,
+        subscription: {
+          status: subscription.status,
+          endDate: subscription.endDate
+        }
       }
     });
 

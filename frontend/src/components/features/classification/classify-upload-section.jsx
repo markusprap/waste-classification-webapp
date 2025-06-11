@@ -9,21 +9,24 @@ import { useLanguage } from "@/models/language-context"
 import { ClassificationResultCard } from "./classification-result-card"
 import { classifyWasteImage } from "@/lib/tensorflow-model"
 import dynamic from "next/dynamic"
+import { useLoadingState } from "@/hooks/use-loading-state"
 
 // Dynamically import Webcam to avoid SSR issues
 const Webcam = dynamic(() => import("react-webcam"), { ssr: false })
 
-export function ClassifyUploadSection({ initialClassificationData, onClassificationUpdate }) {  const { t, language } = useLanguage()
+export function ClassifyUploadSection({ initialClassificationData, onClassificationUpdate }) {
+  const { t, language } = useLanguage()
   // Temporarily removed auth for pure login development
   // const { user, isAuthenticated, classify } = useAuth()
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
   const webcamRef = useRef(null)
+  const { withLoading, isLoading } = useLoadingState()
   
   const [selectedImage, setSelectedImage] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
-  const [isClassifying, setIsClassifying] = useState(false)
+  // Remove isClassifying state since we're using the global loading state
   const [classificationResult, setClassificationResult] = useState(null)
   const [error, setError] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
@@ -160,10 +163,10 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
       setShowWebcam(false)
     }
   }
-
   const cancelWebcam = () => {
     setShowWebcam(false)
   }
+  
   const classifyWaste = useCallback(async () => {
     if (!selectedFile) {
       console.log('ClassifyWaste - No file selected');
@@ -172,67 +175,81 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
 
     console.log('ClassifyWaste - Starting classification without auth for pure login development');
     
-    setIsClassifying(true);
     setError(null);
 
     try {
-      console.log('ClassifyWaste - Processing file:', selectedFile.name);
-      
-      // Convert file to base64 for API
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageData = e.target.result;
+      // Use the global loading state instead of local isClassifying state
+      await withLoading(async () => {
+        console.log('ClassifyWaste - Processing file:', selectedFile.name);
         
-        // Use demo API route without authentication
-        console.log('ClassifyWaste - Calling demo API route');
-        const response = await fetch('/api/classify-demo', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ imageData, location: null }),
-        });
+        // Convert file to base64 for API
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            try {
+              const imageData = e.target.result;
+              
+              // Use demo API route without authentication
+              console.log('ClassifyWaste - Calling demo API route');
+              const response = await fetch('/api/classify-demo', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ imageData, location: null }),
+              });
 
-        const data = await response.json();
-        console.log('ClassifyWaste - Demo API response:', data);
+              const data = await response.json();
+              console.log('ClassifyWaste - Demo API response:', data);
 
-        if (response.ok && data.success) {
-          console.log('ClassifyWaste - Classification successful:', data.classification);
-          setClassificationResult(data.classification);
-          if (onClassificationUpdate) {
-            onClassificationUpdate(data.classification);
-          }
-        } else {
-          console.error('ClassifyWaste - Classification failed:', data.error);
-          setError(data.error || 'Classification failed');
-          
-          // Fallback result in case of error
-          const fallbackResult = {
-            type: "Unknown Waste",
-            typeId: "Sampah Tidak Dikenal",
-            category: "General Waste",
-            categoryId: "Sampah Umum",
-            confidence: 50,
-            description: "Unable to classify this waste accurately",
-            descriptionId: "Tidak dapat mengklasifikasi sampah ini dengan akurat",
-            disposal: "Place in general waste bin",
-            disposalId: "Masukkan ke tempat sampah umum",
-            recommendation: "Consider manual sorting or ask waste management professionals",
-            recommendationId: "Pertimbangkan pemisahan manual atau tanya profesional pengelolaan sampah",
-            method: "reduce",
+              if (response.ok && data.success) {
+                console.log('ClassifyWaste - Classification successful:', data.classification);
+                setClassificationResult(data.classification);
+                if (onClassificationUpdate) {
+                  onClassificationUpdate(data.classification);
+                }
+                resolve();
+              } else {
+                console.error('ClassifyWaste - Classification failed:', data.error);
+                setError(data.error || 'Classification failed');
+                
+                // Fallback result in case of error
+                const fallbackResult = {
+                  type: "Unknown Waste",
+                  typeId: "Sampah Tidak Dikenal",
+                  category: "General Waste",
+                  categoryId: "Sampah Umum",
+                  confidence: 50,
+                  description: "Unable to classify this waste accurately",
+                  descriptionId: "Tidak dapat mengklasifikasi sampah ini dengan akurat",
+                  disposal: "Place in general waste bin",
+                  disposalId: "Masukkan ke tempat sampah umum",
+                  recommendation: "Consider manual sorting or ask waste management professionals",
+                  recommendationId: "Pertimbangkan pemisahan manual atau tanya profesional pengelolaan sampah",
+                  method: "reduce",
+                };
+                
+                setClassificationResult(fallbackResult);
+                if (onClassificationUpdate) {
+                  onClassificationUpdate(fallbackResult);
+                }
+                resolve();
+              }
+            } catch (error) {
+              console.error("Classification API error:", error);
+              reject(error);
+            }
           };
           
-          setClassificationResult(fallbackResult);
-          if (onClassificationUpdate) {
-            onClassificationUpdate(fallbackResult);
-          }
-        }
-      };
-      
-      reader.readAsDataURL(selectedFile);
-      
+          reader.onerror = (error) => {
+            reject(error);
+          };
+          
+          reader.readAsDataURL(selectedFile);
+        });
+      });
     } catch (error) {
-      console.error("Classification error:", error)
+      console.error("Classification error:", error);
       setError(`Classification failed: ${error.message}`)
       
       const fallbackResult = {
@@ -254,17 +271,15 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
       if (onClassificationUpdate) {
         onClassificationUpdate(fallbackResult)
       }
-    } finally {
-      setIsClassifying(false)
     }
-  }, [selectedFile, onClassificationUpdate, language])
+  }, [selectedFile, onClassificationUpdate, language, withLoading])
 
   const resetUpload = useCallback(() => {
     setSelectedImage(null)
     setSelectedFile(null)
     setClassificationResult(null)
     setError(null)
-    setIsClassifying(false)
+    // Remove isClassifying reference
     setShowOptions(false)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -463,7 +478,7 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                 <div className="p-6 bg-gray-50 border-t">
                   {/* Temporarily removed auth UI for pure login development */}
                   
-                  {isClassifying ? (
+                  {isLoading ? (
                     <div className="flex items-center justify-center space-x-2 py-2">
                       <Loader2 className="w-5 h-5 animate-spin text-green-600" />
                       <span className="text-green-700">

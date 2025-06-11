@@ -9,6 +9,7 @@ import { WasteManagementMethods } from "./waste-management-methods"
 import { MapSection } from "@/components/features/maps/map-section"
 import { useLanguage } from "@/models/language-context"
 import { ScrollToTop } from "@/components/features/shared/scroll-to-top"
+import { useLoadingState } from "@/hooks/use-loading-state"
 
 export function ClassifyPageContent() {
   const { language, t } = useLanguage()

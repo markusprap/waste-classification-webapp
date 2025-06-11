@@ -86,19 +86,61 @@ model Classification {
 }
 
 model Subscription {
-  id        String   @id @default(cuid())
-  userId    String
-  plan      String   // free, premium, corporate
-  status    String   // active, inactive, cancelled
-  startDate DateTime @default(now())
-  endDate   DateTime?
-  amount    Float?
-  currency  String   @default("USD")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  userId       String
+  plan         String   // free, premium, corporate
+  status       String   @default("active") // active, inactive, cancelled
+  startDate    DateTime @default(now())
+  endDate      DateTime?
+  amount       Float?   @default(10000) // Default 10000 IDR for premium
+  currency     String   @default("IDR")
+  paymentId    String?  // Order ID from payment gateway
+  paymentStatus String? // success, pending, failed
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@map("subscriptions")
+}
+
+model WasteBank {
+  id          String   @id @default(cuid())
+  nama        String
+  alamat      String
+  latitude    Float
+  longitude   Float
+  telepon     String?
+  email       String?
+  jamOperasi  String?
+  jenisWaste  String?
+  deskripsi   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("waste_banks")
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   // Full article content
+  excerpt     String   // Short description for preview
+  coverImage  String?  // Cover image filename
+  coverOriginalName String? // Original uploaded filename
+  coverSize   Int?     // Image file size in bytes
+  coverType   String?  // Image MIME type
+  category    String   // 'recycling', 'composting', 'plastic', 'zero-waste', etc
+  tags        String   // Comma-separated tags
+  author      String   @default("Tim EcoWaste")
+  readTime    Int?     // Estimated reading time in minutes
+  viewCount   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("articles")
 }

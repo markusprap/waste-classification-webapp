@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/models/auth-context';
 import { useLanguage } from '@/models/language-context';
 import { Button } from '@/components/ui/button';
@@ -16,34 +17,13 @@ import {
 import { Check, Crown, Building, Zap, Users, BarChart3, Shield, Headphones } from 'lucide-react';
 
 export default function PricingDialog({ isOpen, onClose, highlightPlan = null }) {
-  const { user, upgradePlan } = useAuth();
+  const { user } = useAuth();
   const { language } = useLanguage();
-  const [upgrading, setUpgrading] = useState(false);
-  const [upgradeError, setUpgradeError] = useState('');
-  const [upgradeSuccess, setUpgradeSuccess] = useState('');
-
-  const handleUpgrade = async (plan) => {
-    setUpgrading(true);
-    setUpgradeError('');
-    setUpgradeSuccess('');
-
-    const result = await upgradePlan(plan);
-    
-    if (result.success) {
-      setUpgradeSuccess(
-        language === 'id' 
-          ? `Berhasil upgrade ke plan ${plan}! Selamat menikmati fitur premium.` 
-          : `Successfully upgraded to ${plan} plan! Enjoy your premium features.`
-      );
-      setTimeout(() => {
-        onClose();
-        setUpgradeSuccess('');
-      }, 3000);
-    } else {
-      setUpgradeError(result.error);
+  const router = useRouter();  const handleUpgrade = (plan) => {
+    if (plan !== 'free') {
+      onClose();
+      router.push('/payment/confirm');
     }
-    
-    setUpgrading(false);
   };
 
   const plans = [
@@ -72,10 +52,9 @@ export default function PricingDialog({ isOpen, onClose, highlightPlan = null })
       price: language === 'id' ? 'Rp 49,000/bulan' : '$9.99/month',
       icon: <Crown className="w-6 h-6" />,
       color: 'bg-blue-100 text-blue-800',
-      buttonColor: 'bg-blue-600 hover:bg-blue-700',
-      popular: true,
-      features: [
-        language === 'id' ? '50 klasifikasi per hari' : '50 classifications per day',
+      buttonColor: 'bg-black hover:bg-gray-800',
+      popular: true,      features: [
+        language === 'id' ? 'Klasifikasi sampah tanpa batas' : 'Unlimited waste classifications',
         language === 'id' ? 'Analytics detail' : 'Detailed analytics',
         language === 'id' ? 'Export data CSV/PDF' : 'CSV/PDF data export',
         language === 'id' ? 'Dukungan prioritas' : 'Priority support',
@@ -173,20 +152,16 @@ export default function PricingDialog({ isOpen, onClose, highlightPlan = null })
                     <p key={index} className="text-xs text-gray-500 mb-1">• {limitation}</p>
                   ))}
                 </div>
-              )}
-
-              <Button
+              )}              <Button
                 onClick={() => plan.id !== 'free' && handleUpgrade(plan.id)}
-                disabled={upgrading || user?.plan === plan.id || plan.id === 'free'}
+                disabled={user?.plan === plan.id || plan.id === 'free'}
                 className={`w-full ${plan.buttonColor} text-white`}
               >
-                {upgrading 
-                  ? (language === 'id' ? 'Memproses...' : 'Processing...')
-                  : user?.plan === plan.id
-                    ? (language === 'id' ? 'Plan Aktif' : 'Current Plan')
-                    : plan.id === 'free'
-                      ? (language === 'id' ? 'Plan Dasar' : 'Basic Plan')
-                      : (language === 'id' ? 'Upgrade Sekarang' : 'Upgrade Now')
+                {user?.plan === plan.id
+                  ? (language === 'id' ? 'Plan Aktif' : 'Current Plan')
+                  : plan.id === 'free'
+                    ? (language === 'id' ? 'Plan Dasar' : 'Basic Plan')
+                    : (language === 'id' ? 'Upgrade Sekarang' : 'Upgrade Now')
                 }
               </Button>
             </div>
@@ -224,20 +199,7 @@ export default function PricingDialog({ isOpen, onClose, highlightPlan = null })
             <div className="py-2 text-center">❌</div>
             <div className="py-2 text-center">❌</div>
             <div className="py-2 text-center">✅</div>
-          </div>
-        </div>
-
-        {upgradeError && (
-          <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
-            {upgradeError}
-          </div>
-        )}
-
-        {upgradeSuccess && (
-          <div className="text-green-600 text-sm text-center bg-green-50 p-3 rounded-lg">
-            {upgradeSuccess}
-          </div>
-        )}
+          </div>        </div>
 
         <AlertDialogFooter>
           <AlertDialogAction

@@ -7,7 +7,7 @@ const translations = {
   en: {
     home: "Home",
     classify: "Classify",
-    team: "Team",
+    team: "About", // Change from Team to About
     blog: "Blog",
     "hero.title": "Transform Your Waste Management with AI Intelligence",
     "hero.description":
@@ -70,7 +70,7 @@ const translations = {
   id: {
     home: "Beranda",
     classify: "Klasifikasi",
-    team: "Tim",
+    team: "Tentang", // Change to Tentang
     blog: "Blog",
     "hero.title": "Revolusi Pengelolaan Sampah dengan Kecerdasan AI",
     "hero.description":

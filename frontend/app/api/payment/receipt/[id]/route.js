@@ -15,7 +15,8 @@ export async function GET(request, { params }) {
       );
     }
     
-    const subscriptionId = params.id;
+    const resolvedParams = await params;
+    const subscriptionId = resolvedParams.id;
     
     if (!subscriptionId) {
       return NextResponse.json(
