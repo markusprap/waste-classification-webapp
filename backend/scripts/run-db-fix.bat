@@ -1,0 +1,9 @@
+@echo off
+echo Running script to fix database issues...
+cd "d:\PROJECTS\Coding Camp 2025 powered by DBS Foundation\Capstone\waste-classification-webapp\backend"
+echo Running comprehensive database fix script...
+node scripts/fix-database.js
+echo.
+echo Checking database status...
+node scripts/check-db-status.js
+pause
