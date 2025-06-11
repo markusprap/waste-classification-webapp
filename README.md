@@ -22,26 +22,44 @@ Upload a photo of waste and the AI will tell you what type it is (organic, recyc
 
 ## Getting Started
 
-### Frontend (React + Vite)
+### Frontend (Next.js)
 
 1. Install dependencies:
     ```bash
-    npm install
+    cd frontend
+    npm install --legacy-peer-deps
     ```
 2. Run the development server:
     ```bash
     npm run dev
     ```
 
-### Backend (Flask)
+### Backend (Node.js with Hapi)
 
 1. Install dependencies:
     ```bash
-    pip install -r requirements.txt
+    cd backend
+    npm install
     ```
-2. Run the Flask app:
+2. Run the backend server:
     ```bash
-    python app.py
+    npm run dev
+    ```
+
+### Database Setup
+
+The project includes a pre-seeded SQLite database (`backend/database/prisma/dev.db`) with sample data for immediate testing. If you want to reset or recreate the database:
+
+1. Generate Prisma client:
+    ```bash
+    cd backend
+    npx prisma generate
+    ```
+
+2. Run the seeding script to populate the database with sample data:
+    ```bash
+    cd backend
+    node scripts/run-final-seeding.js
     ```
 
 ## Subscription Plans
