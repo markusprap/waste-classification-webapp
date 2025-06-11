@@ -14,7 +14,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12">
           <div>
             <div className="flex items-center space-x-2">
-              <Image src="/images/recycle-logo-white.png" alt="WasteWise AI Logo" width={24} height={24} className="h-6 w-6" />
+              <Image src="/images/logos/recycle-logo-white.png" alt="WasteWise AI Logo" width={24} height={24} className="h-6 w-6" />
               <span className="text-lg font-bold">WasteWise AI</span>
             </div>
             <p className="mt-4 text-gray-400">{t("footer.tagline")}</p>

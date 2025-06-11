@@ -217,10 +217,9 @@ export default function BlogPage() {
               <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-4">
                 <Image 
                   src={articles[0].coverImage 
-                    ? (articles[0].coverImage.startsWith('http') 
-                      ? articles[0].coverImage 
+                    ? (articles[0].coverImage.startsWith('http')                ? articles[0].coverImage 
                       : `/uploads/articles/${articles[0].coverImage.replace(/^.*[\\\/]/, '')}`)
-                    : '/images/placeholder.jpg'} 
+                    : '/images/placeholders/placeholder.jpg'}
                   alt={articles[0].title}
                   width={1200}
                   height={675}
@@ -268,8 +267,7 @@ export default function BlogPage() {
                       src={article.coverImage 
                         ? (article.coverImage.startsWith('http') 
                           ? article.coverImage 
-                          : `/uploads/articles/${article.coverImage.replace(/^.*[\\\/]/, '')}`)
-                        : '/images/placeholder.jpg'}
+                          : `/uploads/articles/${article.coverImage.replace(/^.*[\\\/]/, '')}`)                        : '/images/placeholders/placeholder.jpg'}
                       alt={article.title}
                       width={800}
                       height={600}

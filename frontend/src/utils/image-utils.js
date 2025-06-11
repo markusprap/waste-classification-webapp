@@ -3,9 +3,8 @@
  * From: https://unsplash.com/photos/a-building-with-balconies-mEdzRk51BiU
  * To: https://images.unsplash.com/photo-[id]?auto=format&fit=crop&w=1200
  */
-export function convertUnsplashUrl(url, options = {}) {
-  // Skip if URL is undefined or empty
-  if (!url) return '/images/placeholder.jpg';
+export function convertUnsplashUrl(url, options = {}) {  // Skip if URL is undefined or empty
+  if (!url) return '/images/placeholders/placeholder.jpg';
   
   // Handle local backend uploaded images 
   if (url.startsWith('uploads/')) {

@@ -10,10 +10,10 @@ export function TechnologiesSection() {
     <section className="py-20 md:py-24">
       <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
         <h2 className="mb-16 text-center text-3xl font-bold">{t("tech.title")}</h2>        <div className="flex flex-wrap items-center justify-center gap-10 md:gap-14 lg:gap-16">
-          <TechIcon src="/images/python.png" alt="Python" />
-          <TechIcon src="/images/atom.png" alt="React" />
-          <TechIcon src="/images/nextjs.png" alt="Next.js" />
-          <TechIcon src="/images/nodejs.png" alt="Node.js" />
+          <TechIcon src="/images/tech/python.png" alt="Python" />
+          <TechIcon src="/images/icons/atom.png" alt="React" />
+          <TechIcon src="/images/tech/nextjs.png" alt="Next.js" />
+          <TechIcon src="/images/tech/nodejs.png" alt="Node.js" />
         </div>
       </div>
     </section>

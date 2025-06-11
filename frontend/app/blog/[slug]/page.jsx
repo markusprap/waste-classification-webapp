@@ -252,7 +252,7 @@ export default function ArticleDetailPage() {
                     <Link href={`/blog/${article.slug}`} key={article.id} className="group flex flex-col h-full">
                       <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-4">
                         <img 
-                          src={article.coverImage || '/images/placeholder.jpg'} 
+                          src={article.coverImage || '/images/placeholders/placeholder.jpg'} 
                           alt={article.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />

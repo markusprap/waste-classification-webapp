@@ -32,7 +32,7 @@ export default function SupportedBySection() {
           <div className="flex flex-col items-center">
             <div className="relative h-24 w-64">
               <Image
-                src="/images/coding-camp-logo.png"
+                src="/images/logos/coding-camp-logo.png"
                 alt="Coding Camp 2025 powered by DBS Foundation"
                 fill
                 style={{ objectFit: "contain" }}
@@ -43,7 +43,7 @@ export default function SupportedBySection() {
           <div className="flex flex-col items-center">
             <div className="relative h-24 w-64">
               <Image
-                src="/images/dicoding-logo.png"
+                src="/images/logos/dicoding-logo.png"
                 alt="Dicoding Indonesia"
                 fill
                 style={{ objectFit: "contain" }}

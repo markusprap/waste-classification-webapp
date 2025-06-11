@@ -15,8 +15,7 @@ export default function TeamMembersSection() {
       title: "Tim Pengembang Kami",
       subtitle: "Individu-individu berbakat di balik proyek WasteWise AI"
     }
-  };const teamMembers = [
-    {
+  };const teamMembers = [    {
       id: "MC009D5X0397",
       name: "Dea Yuliani Sabrina",
       role: {
@@ -27,11 +26,10 @@ export default function TeamMembersSection() {
         en: "Specializes in developing and optimizing machine learning models for waste classification. Expert in TensorFlow and computer vision algorithms.",
         id: "Spesialis dalam mengembangkan dan mengoptimalkan model machine learning untuk klasifikasi sampah. Ahli di TensorFlow dan algoritma computer vision."
       },
-      image: "/placeholder-user.jpg",
+      image: "/images/team/dea.jpeg",
       github: "https://github.com",
       linkedin: "https://linkedin.com"
-    },
-    {
+    },    {
       id: "FC013D5Y1566",
       name: "Markus Prap Kurniawan",
       role: {
@@ -42,11 +40,10 @@ export default function TeamMembersSection() {
         en: "Develops both frontend and backend systems. Skilled in React, Next.js, Node.js, and database management for seamless user experience.",
         id: "Mengembangkan sistem frontend dan backend. Ahli di React, Next.js, Node.js, dan manajemen database untuk pengalaman pengguna yang sempurna."
       },
-      image: "/placeholder-user.jpg",
+      image: "/images/team/markus.jpg",
       github: "https://github.com",
       linkedin: "https://linkedin.com"
-    },
-    {
+    },    {
       id: "FC375D5Y1854",
       name: "Izaq Zulfikar",
       role: {
@@ -57,11 +54,10 @@ export default function TeamMembersSection() {
         en: "Frontend and backend developer focused on creating responsive and intuitive user interfaces. Expert in modern web technologies and API development.",
         id: "Developer frontend dan backend yang fokus pada pembuatan antarmuka pengguna yang responsif dan intuitif. Ahli di teknologi web modern dan pengembangan API."
       },
-      image: "/placeholder-user.jpg",
+      image: "/images/team/izaq.jpeg",
       github: "https://github.com",
       linkedin: "https://linkedin.com"
-    },
-    {
+    },    {
       id: "MC009D5Y2213",
       name: "Dwi Nurcahyo Purbonegoro",
       role: {
@@ -72,11 +68,10 @@ export default function TeamMembersSection() {
         en: "Machine learning specialist working on data preprocessing, model training, and performance optimization for accurate waste detection and classification.",
         id: "Spesialis machine learning yang bekerja pada preprocessing data, pelatihan model, dan optimasi performa untuk deteksi dan klasifikasi sampah yang akurat."
       },
-      image: "/placeholder-user.jpg",
+      image: "/images/team/dwi.jpeg",
       github: "https://github.com",
       linkedin: "https://linkedin.com"
-    },
-    {
+    },    {
       id: "MC009D5X2450",
       name: "Clara Marsya Dekawanti",
       role: {
@@ -87,7 +82,7 @@ export default function TeamMembersSection() {
         en: "Focuses on model evaluation, data analysis, and implementing AI solutions for environmental sustainability. Passionate about using AI for social good.",
         id: "Fokus pada evaluasi model, analisis data, dan implementasi solusi AI untuk keberlanjutan lingkungan. Passionate tentang menggunakan AI untuk kebaikan sosial."
       },
-      image: "/placeholder-user.jpg",
+      image: "/images/team/clara.jpeg",
       github: "https://github.com",
       linkedin: "https://linkedin.com"
     }

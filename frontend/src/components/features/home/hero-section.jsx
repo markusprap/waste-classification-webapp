@@ -36,7 +36,7 @@ export function HeroSection() {
 
           <div className="w-full max-w-lg">
             <Image
-              src="/images/recycling-illustration.jpeg"
+              src="/images/illustrations/recycling-illustration.jpeg"
               alt="People recycling waste into different colored bins"
               width={600}
               height={400}

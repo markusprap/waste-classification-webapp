@@ -53,7 +53,7 @@ const navLinks = [
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
             <Image 
-              src="/images/recycle-logo.png" 
+              src="/images/logos/recycle-logo.png" 
               alt="WasteWise AI Logo" 
               width={24} 
               height={24} 

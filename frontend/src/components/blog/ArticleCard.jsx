@@ -31,7 +31,7 @@ export default function ArticleCard({ article }) {
             ? (article.coverImage.startsWith('http') 
               ? article.coverImage 
               : `/uploads/articles/${article.coverImage.replace(/^.*[\\\/]/, '')}`)
-            : '/images/placeholder.jpg'}
+            : '/images/placeholders/placeholder.jpg'}
           alt={article.title}          
           width={800}
           height={600}

@@ -45,21 +45,21 @@ export function BenefitsSection() {
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-10">
           <BenefitCard
-            icon={<Image src="/images/education.png" alt="Education icon" width={32} height={32} className="h-8 w-8" />}
+            icon={<Image src="/images/icons/education.png" alt="Education icon" width={32} height={32} className="h-8 w-8" />}
             title={t("benefits.educational.title")}
             description={t("benefits.educational.description")}
             color="emerald"
           />
 
           <BenefitCard
-            icon={<Image src="/images/leaf.png" alt="Eco-friendly icon" width={32} height={32} className="h-8 w-8" />}
+            icon={<Image src="/images/icons/leaf.png" alt="Eco-friendly icon" width={32} height={32} className="h-8 w-8" />}
             title={t("benefits.eco.title")}
             description={t("benefits.eco.description")}
             color="teal"
           />
 
           <BenefitCard
-            icon={<Image src="/images/robot.png" alt="AI icon" width={32} height={32} className="h-8 w-8" />}
+            icon={<Image src="/images/icons/robot.png" alt="AI icon" width={32} height={32} className="h-8 w-8" />}
             title={t("benefits.ai.title")}
             description={t("benefits.ai.description")}
             color="cyan"
