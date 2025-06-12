@@ -3,7 +3,7 @@
     {
       "name": "backend",
       "root": "backend",
-      "buildCommand": "npm install",
+      "installCommand": "npm install",
       "startCommand": "node server.js"
     }
   ]
