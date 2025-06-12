@@ -3,6 +3,7 @@ WORKDIR /app
 COPY backend/package*.json ./
 RUN npm install
 COPY backend/ ./
+RUN npx prisma generate
 RUN mkdir -p public/uploads/articles
 ENV PORT=3001
 ENV NODE_ENV=production
