@@ -21,9 +21,11 @@
     "axios": "^1.5.0",
     "better-sqlite3": "^11.10.0",
     "dotenv": "^16.3.1",
-    "form-data": "^4.0.0",
+    "form-data": "^4.0.3",
+    "formidable": "^2.1.1",
     "midtrans-client": "^1.4.3",
     "multer": "^1.4.5-lts.1",
+    "node-fetch": "^2.7.0",
     "redis": "^4.6.8",
     "sharp": "^0.34.2",
     "sqlite3": "^5.1.7"

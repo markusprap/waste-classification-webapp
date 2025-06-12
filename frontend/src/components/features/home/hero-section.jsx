@@ -14,10 +14,9 @@ export function HeroSection() {
         <div className="flex flex-col items-center justify-between gap-16 lg:gap-20 md:flex-row">
           <div className="max-w-xl">
             <h1 className="text-4xl font-bold leading-tight md:text-5xl lg:text-6xl">{t("hero.title")}</h1>
-            <p className="mt-6 text-gray-600">{t("hero.description")}</p>
-            <div className="mt-10 flex space-x-4">
+            <p className="mt-6 text-gray-600">{t("hero.description")}</p>            <div className="mt-10 flex space-x-4">
               <Link href="/classify">
-                <Button className="bg-black text-white hover:bg-gray-800">{t("hero.getStarted")}</Button>
+                <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all duration-300 transform hover:scale-105 shadow-lg">{t("hero.getStarted")}</Button>
               </Link>
               <Button 
                 variant="outline" 

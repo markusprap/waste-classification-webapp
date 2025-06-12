@@ -16,10 +16,8 @@ export function GlobalLoader() {
       setVisible(true)
       setProgress(0)
       
-      // Progressively increase the loading bar
       interval = setInterval(() => {
         setProgress((prevProgress) => {
-          // Move quickly to 70%, then slow down
           if (prevProgress < 70) {
             return prevProgress + 5
           } else if (prevProgress < 90) {
@@ -29,10 +27,8 @@ export function GlobalLoader() {
         })
       }, 100)
     } else {
-      // When loading is done, quickly complete the progress bar
       setProgress(100)
       
-      // After completion, hide the loader
       timeout = setTimeout(() => {
         setVisible(false)
       }, 500)

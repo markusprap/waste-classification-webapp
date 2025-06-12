@@ -1,8 +1,6 @@
-// fix-subscription-dates.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Log everything to the console for debugging
 const log = (...args) => {
   console.log('[DEBUG]', ...args);
 };
@@ -11,7 +9,6 @@ async function fixSubscriptionDates() {
   log('Starting to fix subscription dates...');
   
   try {
-    // Find all pending subscriptions
     const pendingSubs = await prisma.subscription.findMany({
       where: { 
         status: 'pending'
@@ -30,12 +27,10 @@ async function fixSubscriptionDates() {
       return;
     }
     
-    // Process each subscription
     for (const sub of pendingSubs) {
       log(`Processing subscription for user: ${sub.user?.email || 'Unknown'}`);
       
       try {
-        // Calculate end date - 1 month from start date
         const startDate = sub.startDate || new Date();
         const endDate = new Date(startDate);
         endDate.setMonth(endDate.getMonth() + 1);
@@ -43,7 +38,6 @@ async function fixSubscriptionDates() {
         log(`  - Setting end date to: ${endDate.toISOString()}`);
         log(`  - Changing status from '${sub.status}' to 'active'`);
         
-        // Update subscription
         await prisma.subscription.update({
           where: { id: sub.id },
           data: {
@@ -53,7 +47,6 @@ async function fixSubscriptionDates() {
           }
         });
         
-        // Also update user to premium if not already
         if (sub.user && sub.user.plan !== 'premium') {
           log(`  - Updating user plan from '${sub.user.plan}' to 'premium'`);
           
@@ -71,7 +64,6 @@ async function fixSubscriptionDates() {
       }
     }
     
-    // Verify the changes
     const verifySubscriptions = await prisma.subscription.findMany({
       where: {
         id: {
@@ -106,14 +98,12 @@ async function fixSubscriptionDates() {
   }
 }
 
-// Execute the function and handle errors
 fixSubscriptionDates()
   .catch(e => {
     log(`Unhandled error: ${e.message}`);
     process.exit(1);
   });
 
-// Allow script to finish naturally
 setTimeout(() => {
   log('Script execution timed out - this is normal if the script completed successfully');
   process.exit(0);

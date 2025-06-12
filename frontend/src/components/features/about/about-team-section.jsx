@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useLanguage } from "@/models/language-context";
-import TeamMemberCard from "../team/team-member-card";
+import AboutTeamMemberCard from "./about-team-member-card";
 
 export default function AboutTeamSection() {
   const { language } = useLanguage();
@@ -30,8 +30,8 @@ export default function AboutTeamSection() {
         id: "Spesialis dalam mengembangkan dan mengoptimalkan model machine learning untuk klasifikasi sampah. Ahli di TensorFlow dan algoritma computer vision."
       },
       image: "/images/team/dea.jpeg",
-      github: "https://github.com",
-      linkedin: "https://linkedin.com"
+      github: "https://github.com/deayulianis",
+      linkedin: "https://www.linkedin.com/in/dea-yuliani-sabrina"
     },
     {
       id: "FC013D5Y1566",      name: "Markus Prap Kurniawan",
@@ -44,8 +44,8 @@ export default function AboutTeamSection() {
         id: "Mengembangkan sistem frontend dan backend. Ahli di React, Next.js, Node.js, dan manajemen database untuk pengalaman pengguna yang sempurna."
       },
       image: "/images/team/markus.jpg",
-      github: "https://github.com",
-      linkedin: "https://linkedin.com"
+      github: "https://github.com/markusprap",
+      linkedin: "https://www.linkedin.com/in/markusprap/"
     },
     {
       id: "FC375D5Y1854",      name: "Izaq Zulfikar",
@@ -58,8 +58,8 @@ export default function AboutTeamSection() {
         id: "Developer frontend dan backend yang fokus pada pembuatan antarmuka pengguna yang responsif dan intuitif. Ahli di teknologi web modern dan desain antarmuka pengguna."
       },
       image: "/images/team/izaq.jpeg",
-      github: "https://github.com",
-      linkedin: "https://linkedin.com"
+      github: "https://github.com/izkar02",
+      linkedin: "https://www.linkedin.com/in/izaq-zulfikar"
     },
     {
       id: "MC009D5Y2213",      name: "Dwi Nurcahyo Purbonegoro",
@@ -72,8 +72,8 @@ export default function AboutTeamSection() {
         id: "Spesialis machine learning yang bekerja pada preprocessing data, pelatihan model, dan optimasi performa untuk deteksi dan klasifikasi sampah yang akurat."
       },
       image: "/images/team/dwi.jpeg",
-      github: "https://github.com",
-      linkedin: "https://linkedin.com"
+      github: "https://github.com/DcCode46",
+      linkedin: "https://www.linkedin.com/in/dwi-nurcahyo-purbonegoro"
     },
     {
       id: "MC009D5X2450",      name: "Clara Marsya Dekawanti",
@@ -86,8 +86,8 @@ export default function AboutTeamSection() {
         id: "Fokus pada evaluasi model, analisis data, dan implementasi solusi AI untuk keberlanjutan lingkungan. Passionate tentang menggunakan AI untuk kebaikan sosial."
       },
       image: "/images/team/clara.jpeg",
-      github: "https://github.com",
-      linkedin: "https://linkedin.com"
+      github: "https://github.com/claramarsya",
+      linkedin: "https://www.linkedin.com/in/clara-marsya-dekawanti"
     }
   ];
 
@@ -107,10 +107,11 @@ export default function AboutTeamSection() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
           {teamMembers.map((member, index) => (
-            <TeamMemberCard
+            <AboutTeamMemberCard
               key={member.id}
               member={member}
               language={language}
+              showId // tambahkan prop showId agar AboutTeamMemberCard bisa menampilkan ID
             />
           ))}
         </div>

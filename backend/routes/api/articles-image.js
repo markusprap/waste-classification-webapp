@@ -10,7 +10,7 @@ module.exports = async (server) => {
         output: 'stream',
         parse: true,
         multipart: true,
-        maxBytes: 10 * 1024 * 1024 // 10MB
+        maxBytes: 10 * 1024 * 1024
       }
     },
     handler: async (request, h) => {
@@ -25,10 +25,8 @@ module.exports = async (server) => {
           }).code(400);
         }
 
-        // Store the uploaded file using the common utility
         const storedFile = await storeArticleImage(file);
 
-        // If this is an update, delete the old image
         if (articleId) {
           const article = await request.server.app.prisma.article.findUnique({
             where: { id: articleId },
@@ -40,7 +38,6 @@ module.exports = async (server) => {
           }
         }
 
-        // Return the stored file metadata
         return {
           success: true,
           file: {
@@ -79,10 +76,8 @@ module.exports = async (server) => {
           }).code(404);
         }
 
-        // Delete the file
         await deleteArticleImage(article.coverImage);
 
-        // Update the article record
         await request.server.app.prisma.article.update({
           where: { id: articleId },
           data: {

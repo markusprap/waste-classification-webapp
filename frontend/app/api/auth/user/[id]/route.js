@@ -26,25 +26,25 @@ export async function GET(request, { params }) {
 
     // Get user data from backend
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
-    const response = await fetch(`${backendUrl}/api/users/profile`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: session.user.email,
-        id: userId
-      })
-    });
+    console.log('Fetching user profile from:', `${backendUrl}/api/users/profile`);
+    
+    let userData;
+    
+    try {
+      // First try to get the user profile
+      const response = await fetch(`${backendUrl}/api/users/profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: userId })
+      });
 
-    if (!response.ok) {
-      // Try to sync user if not found
-      if (response.status === 404) {
-        console.log('User not found in backend, attempting sync with details:', {
-          email: session.user.email,
-          name: session.user.name,
-          id: userId
-        });
+      if (response.ok) {
+        userData = await response.json();
+      } else {
+        // If user not found, try to sync first
+        console.log('User profile fetch failed, attempting sync');
         
         const syncResponse = await fetch(`${backendUrl}/api/users/sync`, {
           method: 'POST',
@@ -52,99 +52,63 @@ export async function GET(request, { params }) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            id: userId,
             email: session.user.email,
-            name: session.user.name,
-            provider: 'google',
-            id: userId
+            name: session.user.name
           })
         });
 
-        const syncData = await syncResponse.json();
-        console.log('User sync response:', syncData);
-
-        // Accept { success: true, data: {...} } or { status: 'success', data/user: {...} }
-        const syncOk = (syncResponse.ok && (syncData.success === true || syncData.status === 'success'));
-        const userObj = syncData.data || syncData.user;
-        if (syncOk && userObj) {
-          return NextResponse.json({
-            success: true,
-            user: {
-              id: userObj.id,
-              email: userObj.email,
-              name: userObj.name || session.user.name,
-              plan: userObj.plan || 'free',
-              usageCount: userObj.usageCount || 0,
-              usageLimit: userObj.usageLimit || 30
-            }
-          });
+        if (!syncResponse.ok) {
+          throw new Error(`User sync failed: ${await syncResponse.text()}`);
         }
 
-        // If sync failed, return error
-        console.error('User sync failed:', syncData);
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'User sync failed',
-            details: syncData.message || 'Failed to sync user with backend'
+        // After sync, try to get the profile again
+        const retryResponse = await fetch(`${backendUrl}/api/users/profile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          { status: 404 }
-        );
+          body: JSON.stringify({ id: userId })
+        });
+
+        if (!retryResponse.ok) {
+          throw new Error(`Profile fetch after sync failed: ${await retryResponse.text()}`);
+        }
+
+        userData = await retryResponse.json();
       }
 
-      const errorData = await response.json();
-      console.error('Backend API error:', errorData);
-      
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to fetch user data',
-          details: errorData.message || 'Backend API error'
-        },
-        { status: response.status }
-      );
-    }
+      // Ensure we have valid user data
+      if (!userData?.data) {
+        throw new Error('Invalid user data structure received from backend');
+      }
 
-    const userData = await response.json();
-    if (!userData.success || !userData.data) {
-      console.error('Invalid user data from backend:', userData);
+      // Return successful response with user data
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: userData.data.id,
+          email: userData.data.email,
+          name: userData.data.name,
+          plan: userData.data.plan || 'free',
+          usageCount: userData.data.usageCount || 0,
+          usageLimit: userData.data.usageLimit || 30,
+          lastUsageReset: userData.data.lastUsageReset
+        }
+      });
+
+    } catch (error) {
+      console.error('Error processing user data:', error);
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Invalid user data from backend',
-          details: 'The backend returned invalid user data'
-        },
+        { success: false, error: 'Failed to fetch user data' },
         { status: 500 }
       );
     }
 
-    // Use the data directly from successful profile fetch
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: userData.data.id,
-        email: userData.data.email,
-        name: userData.data.name || session.user.name,
-        plan: userData.data.plan || 'free',
-        usageCount: userData.data.usageCount || 0,
-        usageLimit: userData.data.usageLimit || 30
-      }
-    });
-
   } catch (error) {
-    console.error('=== Frontend User Route Error ===');
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
-    
+    console.error('Frontend user route error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error', 
-        details: error.message,
-        action: 'Please try logging out and back in'
-      },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }

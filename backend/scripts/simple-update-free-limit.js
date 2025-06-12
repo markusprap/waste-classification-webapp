@@ -1,4 +1,3 @@
-// simple-update-free-limit.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -6,14 +5,12 @@ async function updateFreePlanLimit() {
   try {
     console.log('=== UPDATING FREE PLAN USAGE LIMIT ===\n');
     
-    // Get all free plan users
     const freeUsers = await prisma.user.findMany({
       where: { plan: 'free' }
     });
     
     console.log(`Found ${freeUsers.length} users with free plan`);
     
-    // Update each user one by one
     let successCount = 0;
     
     for (const user of freeUsers) {
@@ -39,10 +36,8 @@ async function updateFreePlanLimit() {
   }
 }
 
-// Run the function
 updateFreePlanLimit()
   .then(() => console.log('Script completed'))
   .catch(e => console.error('Script failed:', e));
 
-// Keep the script running to see output
 setTimeout(() => process.exit(0), 5000);

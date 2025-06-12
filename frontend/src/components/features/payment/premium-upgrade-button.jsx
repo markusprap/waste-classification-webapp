@@ -27,7 +27,7 @@ export default function PremiumUpgradeButton({ user }) {
     <div>      <button
         onClick={handleUpgradeClick}
         disabled={isProcessing}
-        className="rounded-lg bg-black hover:bg-gray-800 px-4 py-2 text-white disabled:opacity-50"
+        className="rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 px-4 py-2 text-white disabled:opacity-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
       >
         {isProcessing ? 'Processing...' : 'Upgrade to Premium'}
       </button>

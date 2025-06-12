@@ -130,9 +130,6 @@ model Article {
   content     String   // Full article content
   excerpt     String   // Short description for preview
   coverImage  String?  // Cover image filename
-  coverOriginalName String? // Original uploaded filename
-  coverSize   Int?     // Image file size in bytes
-  coverType   String?  // Image MIME type
   category    String   // 'recycling', 'composting', 'plastic', 'zero-waste', etc
   tags        String   // Comma-separated tags
   author      String   @default("Tim EcoWaste")

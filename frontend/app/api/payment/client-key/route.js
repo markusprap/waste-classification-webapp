@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/src/lib/auth-config";
+import { authOptions } from "@/lib/auth-config";
 
 /**
  * Route handler for GET /api/payment/client-key

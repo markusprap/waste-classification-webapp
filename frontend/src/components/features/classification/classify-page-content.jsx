@@ -1,25 +1,60 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import { Navbar } from "@/components/features/navigation/navbar"
 import { Footer } from "@/components/features/shared/footer"
 import { ClassifyUploadSection } from "./classify-upload-section"
 import { WasteManagementMethods } from "./waste-management-methods"
+import { ArticleRecommendations } from "./article-recommendations"
 import { MapSection } from "@/components/features/maps/map-section"
 import { useLanguage } from "@/models/language-context"
 import { ScrollToTop } from "@/components/features/shared/scroll-to-top"
 import { useLoadingState } from "@/hooks/use-loading-state"
+import { fetchArticlesByCategory, fetchArticlesByMainCategory } from '@/services/articleService'
+import { useAuth } from "@/models/auth-context"
+import AuthDialog from "@/components/features/auth/auth-dialog"
 
 export function ClassifyPageContent() {
   const { language, t } = useLanguage()
   const searchParams = useSearchParams()
-  const [classificationData, setClassificationData] = useState(null)
-  const [userLocation, setUserLocation] = useState(null)
-  const [homeClassificationData, setHomeClassificationData] = useState(null)
-  const [error, setError] = useState(null)
+  const [classificationData, setClassificationData] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [homeClassificationData, setHomeClassificationData] = useState(null);
+  const [error, setError] = useState(null);
+  const [recommendedArticles, setRecommendedArticles] = useState([]);
+  const { isAuthenticated } = useAuth();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+  const [scrollY, setScrollY] = useState(0);
+  const [mapSectionTop, setMapSectionTop] = useState(0);
+  const mapSectionRef = useRef(null);
+
+  const handleAuthClick = () => {
+    setAuthDialogOpen(true)
+  }
+
+  const handleAuthModeSwitch = (mode) => {
+    setAuthMode(mode)
+  }
 
   console.log('🏠 ClassifyPageContent component rendering...');
+
+  // Scroll tracking for sticky login buttons
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+      // Calculate map section position (relative to document)
+      if (mapSectionRef.current) {
+        const rect = mapSectionRef.current.getBoundingClientRect();
+        setMapSectionTop(window.scrollY + rect.top);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initialize
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Check for data from home page when component mounts
   useEffect(() => {
@@ -53,11 +88,51 @@ export function ClassifyPageContent() {
       setError('Failed to initialize classify page');
     }
   }, [searchParams])
-
+  // Fetch recommended articles when classificationData changes
+  useEffect(() => {
+    if (classificationData && (classificationData.mainCategory || classificationData.category)) {
+      fetchArticlesByMainCategory(
+        classificationData.mainCategory,
+        classificationData.category
+      ).then(setRecommendedArticles)
+    } else {
+      setRecommendedArticles([])
+    }
+  }, [classificationData])
+  
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 relative min-h-screen">
+        {/* Render blur overlay only on main content if not authenticated */}
+        {!isAuthenticated && scrollY < mapSectionTop - 200 && (
+          <>
+            {/* Blur overlay only on main content */}
+            <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/70 min-h-screen" />
+            {/* Overlay login prompt: container flex-col, pesan plain text, tombol di bawah */}
+            <div 
+              className="fixed inset-0 z-40 flex items-center justify-center"
+              style={{ minHeight: '100vh' }}
+            >
+              <div className="flex flex-col w-full max-w-xs items-stretch justify-between h-40 bg-white/80 rounded-xl shadow-2xl p-4 border border-emerald-100">
+                <div className="flex-1 flex items-center justify-center">
+                  <span className="text-base font-semibold text-emerald-700 text-center">
+                    {language === 'id' ? 'Login diperlukan untuk mengakses fitur klasifikasi' : 'Login required to access classification features'}
+                  </span>
+                </div>
+                <div className="flex-1 flex items-end justify-center">
+                  <button
+                    onClick={handleAuthClick}
+                    className="w-full px-6 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-base shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 transform hover:scale-105"
+                  >
+                    {language === 'id' ? 'Login Sekarang' : 'Login Now'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mx-6 my-4">
             <p><strong>Error:</strong> {error}</p>
@@ -110,12 +185,27 @@ export function ClassifyPageContent() {
         {/* Waste Management Methods */}
         <WasteManagementMethods classificationData={classificationData} />
 
-        {/* Map Section */}
-        <MapSection initialUserLocation={userLocation} onLocationUpdate={setUserLocation} />
-      
+        {/* Article Recommendations */}
+        {classificationData && (
+          <ArticleRecommendations 
+            mainCategory={classificationData.mainCategory}
+            category={classificationData.category}
+          />
+        )}        {/* Map Section */}
+        <div ref={mapSectionRef}>
+          <MapSection initialUserLocation={userLocation} onLocationUpdate={setUserLocation} />
+        </div>
         <ScrollToTop />
       </main>
       <Footer />
+      
+      {/* Auth Dialog */}
+      <AuthDialog
+        isOpen={authDialogOpen}
+        onClose={() => setAuthDialogOpen(false)}
+        mode={authMode}
+        onSwitchMode={handleAuthModeSwitch}
+      />
     </div>
   )
 }

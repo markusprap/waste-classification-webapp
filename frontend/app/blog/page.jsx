@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import ArticleCard from '@/components/blog/ArticleCard';
 import BlogFilters from '@/components/blog/BlogFilters';
 import Pagination from '@/components/blog/Pagination';
@@ -8,10 +8,12 @@ import { Loader2, BookOpen, Lightbulb, Recycle, Search, Filter } from 'lucide-re
 import { Navbar } from '@/components/features/navigation/navbar';
 import { Footer } from '@/components/features/shared/footer';
 import { ScrollToTop } from '@/components/features/shared/scroll-to-top';
+import { useLanguage } from '@/models/language-context';
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function BlogPage() {
+function BlogContent() {
+  const { language, t } = useLanguage();
   const [articles, setArticles] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,26 +102,23 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      
-      {/* Header Section - Minimal and Modern */}
+        {/* Header Section - Minimal and Modern */}
       <header className="pt-24 pb-10 px-4 bg-white border-b border-gray-100">
         <div className="container mx-auto max-w-5xl">
           <h1 className="text-4xl font-serif font-bold mb-3 text-gray-900">
-            EcoWaste Blog
+            {t('blog.title')}
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl">
-            Panduan mendalam dan inspirasi untuk gaya hidup berkelanjutan dan pengelolaan sampah yang efektif.
+            {t('blog.description')}
           </p>
         </div>
-      </header>
-
-      {/* Search and Filter Bar - Sticky */}
+      </header>      {/* Search and Filter Bar - Sticky */}
       <div className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm transition-all duration-200">
         <div className="container mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
           <div className="relative flex-grow max-w-2xl">
             <input
               type="text"
-              placeholder="Cari artikel..."
+              placeholder={t('blog.search')}
               value={filters.search}
               onChange={(e) => handleFilterChange({ search: e.target.value })}
               className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:border-gray-500 focus:ring-0 outline-none transition-all text-gray-900"
@@ -140,12 +139,10 @@ export default function BlogPage() {
             className={`ml-3 flex items-center px-3 py-2 rounded-full border ${showFilters ? 'bg-gray-100 text-gray-900 border-gray-300' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
           >
             <Filter className="w-4 h-4 mr-1" />
-            <span className="text-sm font-medium">Filter</span>
+            <span className="text-sm font-medium">{t('blog.filter')}</span>
           </button>
         </div>
-      </div>
-
-      {/* Filters Panel - Collapsible */}
+      </div>      {/* Filters Panel - Collapsible */}
       {showFilters && (
         <div className="sticky top-32 z-30 bg-gray-50 border-b border-gray-200 transition-all duration-200">
           <div className="container mx-auto max-w-5xl px-4 py-4">
@@ -158,7 +155,7 @@ export default function BlogPage() {
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                Semua
+                {t('blog.all')}
               </button>
               {categories.map((category) => (
                 <button
@@ -180,7 +177,7 @@ export default function BlogPage() {
                   onClick={() => handleFilterChange({ category: '' })}
                   className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  Reset filter
+                  {t('blog.reset')}
                 </button>
               </div>
             )}
@@ -193,19 +190,18 @@ export default function BlogPage() {
         {/* Results Summary */}
         {!loading && (
           <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-serif font-semibold text-gray-900">
+            <div className="flex items-center justify-between">              <h2 className="text-xl font-serif font-semibold text-gray-900">
                 {filters.search || filters.category ? (
                   <>
-                    {filters.search && `Hasil pencarian "${filters.search}"`}
-                    {filters.category && !filters.search && `Kategori: ${filters.category}`}
+                    {filters.search && `${t('blog.searchResults')} "${filters.search}"`}
+                    {filters.category && !filters.search && `${t('blog.category')} ${filters.category}`}
                   </>
                 ) : (
-                  <>Artikel Terbaru</>
+                  <>{t('blog.latestArticles')}</>
                 )}
               </h2>
               <p className="text-sm text-gray-500">
-                {pagination.total} artikel • Halaman {pagination.current} dari {pagination.pages}
+                {pagination.total} {t('blog.articles')} • {t('blog.page')} {pagination.current} {t('blog.of')} {pagination.pages}
               </p>
             </div>
           </div>
@@ -235,22 +231,20 @@ export default function BlogPage() {
                 </h3>
                 <p className="text-gray-600 line-clamp-2">
                   {articles[0].excerpt}
-                </p>
-                <div className="flex items-center text-sm text-gray-500 mt-2">
-                  <span>{new Date(articles[0].createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </p>                <div className="flex items-center text-sm text-gray-500 mt-2">
+                  <span>{new Date(articles[0].createdAt).toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   <span className="mx-2">•</span>
-                  <span>{articles[0].readTime || 5} menit baca</span>
+                  <span>{articles[0].readTime || 5} {t('blog.readTime')}</span>
                 </div>
               </div>
             </Link>
           </div>
         )}
 
-        {/* Loading State */}
-        {loading && (
+        {/* Loading State */}        {loading && (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-8 h-8 animate-spin text-gray-400 mr-3" />
-            <span className="text-gray-600 font-medium">Memuat artikel...</span>
+            <span className="text-gray-600 font-medium">{t('blog.loading')}</span>
           </div>
         )}
 
@@ -284,11 +278,10 @@ export default function BlogPage() {
                     <p className="text-sm text-gray-600 line-clamp-2">
                       {article.excerpt}
                     </p>
-                  </div>
-                  <div className="flex items-center text-xs text-gray-500 mt-3">
-                    <span>{new Date(article.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  </div>                  <div className="flex items-center text-xs text-gray-500 mt-3">
+                    <span>{new Date(article.createdAt).toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     <span className="mx-2">•</span>
-                    <span>{article.readTime || 5} menit baca</span>
+                    <span>{article.readTime || 5} {t('blog.readTime')}</span>
                   </div>
                 </Link>
               ))}
@@ -296,8 +289,7 @@ export default function BlogPage() {
 
             {/* Pagination - Minimalist */}
             <div className="flex justify-center mt-12 border-t border-gray-100 pt-10">
-              <div className="flex items-center space-x-1">
-                <button
+              <div className="flex items-center space-x-1">                <button
                   onClick={() => handlePageChange(pagination.current - 1)}
                   disabled={!pagination.hasPrev}
                   className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
@@ -306,7 +298,7 @@ export default function BlogPage() {
                       : 'text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  Previous
+                  {t('blog.previous')}
                 </button>
                   {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
                   <button
@@ -330,7 +322,7 @@ export default function BlogPage() {
                       : 'text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  Next
+                  {t('blog.next')}
                 </button>
               </div>
             </div>
@@ -338,17 +330,16 @@ export default function BlogPage() {
         )}
 
         {/* Empty State - Clean and Helpful */}
-        {!loading && articles.length === 0 && (
-          <div className="text-center py-24 border border-gray-100 rounded-xl bg-gray-50">
+        {!loading && articles.length === 0 && (          <div className="text-center py-24 border border-gray-100 rounded-xl bg-gray-50">
             <div className="max-w-md mx-auto">
               <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-serif font-semibold text-gray-900 mb-2">
-                Tidak Ada Artikel Ditemukan
+                {t('blog.empty.title')}
               </h3>
               <p className="text-gray-600 mb-6">
                 {filters.search || filters.category 
-                  ? 'Coba ubah filter pencarian Anda atau gunakan kata kunci yang berbeda.'
-                  : 'Belum ada artikel yang tersedia saat ini.'
+                  ? t('blog.empty.description.filtered')
+                  : t('blog.empty.description.all')
                 }
               </p>
               {(filters.search || filters.category) && (
@@ -356,7 +347,7 @@ export default function BlogPage() {
                   onClick={() => handleFilterChange({ category: '', search: '' })}
                   className="px-5 py-2 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors"
                 >
-                  Lihat Semua Artikel
+                  {t('blog.viewAll')}
                 </button>
               )}
             </div>
@@ -364,27 +355,26 @@ export default function BlogPage() {
         )}
       </main>
       
-      {/* Newsletter - Medium-style */}
-      <section className="bg-gray-50 border-t border-gray-100 py-16">
+      {/* Newsletter - Medium-style */}      <section className="bg-gray-50 border-t border-gray-100 py-16">
         <div className="container mx-auto max-w-xl px-4 text-center">
           <h2 className="text-2xl font-serif font-bold text-gray-900 mb-4">
-            Dapatkan artikel terbaru langsung ke inbox Anda
+            {t('blog.newsletter.title')}
           </h2>
           <p className="text-gray-600 mb-6">
-            Berlangganan newsletter kami untuk mendapatkan inspirasi dan panduan tentang pengelolaan sampah dan gaya hidup berkelanjutan.
+            {t('blog.newsletter.description')}
           </p>
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="email"
-              placeholder="Alamat email Anda"
+              placeholder={t('blog.newsletter.placeholder')}
               className="flex-grow px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-500 focus:ring-0 outline-none"
             />
             <button className="px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
-              Berlangganan
+              {t('blog.newsletter.subscribe')}
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-3">
-            Kami menghormati privasi Anda. Anda dapat berhenti berlangganan kapan saja.
+            {t('blog.newsletter.privacy')}
           </p>
         </div>
       </section>
@@ -392,5 +382,13 @@ export default function BlogPage() {
       <Footer />
       <ScrollToTop />
     </div>
+  );
+}
+
+export default function BlogPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin h-8 w-8" /></div>}>
+      <BlogContent />
+    </Suspense>
   );
 }

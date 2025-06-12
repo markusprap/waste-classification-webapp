@@ -1,35 +1,50 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Upload, Camera, Loader2, X, Image, CameraIcon, Lock } from "lucide-react"
 import { useLanguage } from "@/models/language-context"
-import { useAuth } from "@/models/auth-context"
 import { useRouter } from "next/navigation"
-import { classifyWasteImage } from "@/lib/tensorflow-model"
 import { ClassificationResult } from "@/components/classification"
-import AuthDialog from "@/components/features/auth/auth-dialog"
 import dynamic from "next/dynamic"
+import { useLoadingState } from "@/hooks/use-loading-state"
+import { useAuth } from "@/models/auth-context"
+import AuthDialog from "@/components/features/auth/auth-dialog"
+import { LimitReachedModal } from "../classification/limit-reached-modal"
 
-// Dynamically import Webcam to avoid SSR issues
 const Webcam = dynamic(() => import("react-webcam"), { ssr: false })
 
 export function ImageUpload() {
   const { language } = useLanguage()
-  const { user, isAuthenticated, classify } = useAuth()
   const router = useRouter()
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
   const webcamRef = useRef(null)
+  const dialogRef = useRef(null)
+  const { withLoading, isLoading } = useLoadingState()
+  const { isAuthenticated } = useAuth()
 
   const [selectedImage, setSelectedImage] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
-  const [isClassifying, setIsClassifying] = useState(false)
+  // Remove local isClassifying state
   const [classificationResult, setClassificationResult] = useState(null)
   const [error, setError] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
   const [showWebcam, setShowWebcam] = useState(false)
   const [authDialogOpen, setAuthDialogOpen] = useState(false)
-  const [authMode, setAuthMode] = useState('login')
+  const [showLimitModal, setShowLimitModal] = useState(false)
+  const [limitInfo, setLimitInfo] = useState(null)
+
+  // Close AuthDialog when clicking outside
+  useEffect(() => {
+    if (!authDialogOpen) return
+    function handleClickOutside(event) {
+      if (dialogRef.current && !dialogRef.current.contains(event.target)) {
+        setAuthDialogOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [authDialogOpen])
 
   const handleImageSelect = (file, source = "file") => {
     if (!file || !file.type.startsWith('image/')) {
@@ -91,13 +106,11 @@ export function ImageUpload() {
     event.preventDefault()
   }
 
-  // Open camera with react-webcam
   const openCamera = () => {
     setShowWebcam(true)
     setShowOptions(false)
   }
 
-  // Open file picker for gallery
   const openGallery = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -106,12 +119,10 @@ export function ImageUpload() {
     setShowOptions(false)
   }
 
-  // Show upload options
   const showUploadOptions = () => {
     setShowOptions(true)
   }
 
-  // Capture from webcam
   const captureFromWebcam = () => {
     const imageSrc = webcamRef.current.getScreenshot()
     if (imageSrc) {
@@ -125,70 +136,82 @@ export function ImageUpload() {
     }
   }
 
-  // Cancel webcam
   const cancelWebcam = () => {
     setShowWebcam(false)
   }
 
-  // TRIGGER FUNGSI CLASSIFYMODEL SAAT BUTTON CLASSIFY DIKLIK
   const classifyImage = async () => {
     if (!selectedFile) return
-
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      setAuthDialogOpen(true)
-      return
-    }
-
-    // We don't need to check limits here as the button is already disabled
-    // and the API will also check this, but we'll keep a front-end check for UX
-    if (isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100) {
-      setError(language === "id" 
-        ? "Batas harian 100 klasifikasi telah tercapai. Upgrade ke Premium untuk lebih banyak klasifikasi!"
-        : "Daily limit of 100 classifications reached. Upgrade to Premium for more classifications!"
-      )
-      return
-    }
-
-    setIsClassifying(true)
     setError(null)
-
-    try {
-      console.log('🔍 Classifying image:', selectedFile.name)
-      
-      // Convert file to base64 for API
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const imageData = e.target.result
-        
-        // Use auth context's classify method which handles API call and usage tracking
-        const result = await classify(imageData, null) // We'll add location later if needed
-        
-        if (result.success) {
-          setClassificationResult(result.data.classification)
-          console.log('✅ Classification completed:', result.data)
-        } else {
-          if (result.statusCode === 429) {
-            setError(language === "id" 
-              ? "Batas klasifikasi harian tercapai. Upgrade plan Anda untuk lebih banyak klasifikasi."
-              : "Daily classification limit reached. Please upgrade your plan for more classifications."
-            )
-          } else {
-            setError(result.error)
+    await withLoading(async () => {
+      return new Promise((resolve) => {
+        try {
+          const reader = new FileReader()
+          reader.onload = async (e) => {
+            try {
+              const imageData = e.target.result
+              const response = await fetch('/api/classify', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                  imageData,
+                  location: null
+                }),
+              })
+              const data = await response.json()
+              if (response.status === 429) {
+                setLimitInfo({
+                  plan: data.plan || 'free',
+                  limit: data.limit || 30,
+                  usageCount: data.usageCount || 0,
+                  requireUpgrade: data.requireUpgrade || (data.plan === 'free'),
+                  upgradeUrl: data.upgradeUrl || '/payment',
+                  message: data.message || (language === 'id' 
+                    ? 'Anda telah mencapai batas klasifikasi harian.' 
+                    : 'You have reached your daily classification limit.')
+                });
+                setShowLimitModal(true);
+                setError(data.error || 'Classification limit reached');
+                resolve();
+                return;
+              }
+              if (response.ok && data.success) {
+                setClassificationResult(data.classification)
+              } else {
+                setError(data.error || 'Classification failed')
+                const fallbackResult = {
+                  type: "Unknown Waste",
+                  typeId: "Sampah Tidak Dikenal",
+                  category: "General Waste",
+                  categoryId: "Sampah Umum",
+                  confidence: 50,
+                  description: "Unable to classify this waste accurately",
+                  descriptionId: "Tidak dapat mengklasifikasi sampah ini dengan akurat",
+                  disposal: "Place in general waste bin",
+                  disposalId: "Masukkan ke tempat sampah umum",
+                  recommendation: "Consider manual sorting or ask waste management professionals",
+                  recommendationId: "Pertimbangkan pemisahan manual atau tanya profesional pengelolaan sampah",
+                  method: "reduce",
+                }
+                setClassificationResult(fallbackResult)
+              }
+              resolve()
+            } catch (error) {
+              setError(`Classification failed: ${error.message}`)
+              resolve()
+            }
           }
+          reader.readAsDataURL(selectedFile)
+        } catch (error) {
+          setError(`Classification failed: ${error.message}`)
+          resolve()
         }
-      }
-      reader.readAsDataURL(selectedFile)
-      
-    } catch (error) {
-      console.error('❌ Classification failed:', error)
-      setError(`Classification failed: ${error.message}`)
-    } finally {
-      setIsClassifying(false)
-    }
+      })
+    })
   }
 
-  // NAVIGATE TO CLASSIFY PAGE WITH COMPLETE DATA
   const navigateToClassify = () => {
     if (classificationResult && selectedImage) {
       const classificationPackage = {
@@ -222,8 +245,28 @@ export function ImageUpload() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Webcam Modal */}
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden relative">
+        {/* Overlay lock if not authenticated */}
+        {!isAuthenticated && (
+          <>
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col items-center">
+                <Lock className="w-12 h-12 text-gray-400 mb-2" />
+                <div className="text-gray-700 font-semibold text-lg mb-1">{language === "id" ? "Masuk untuk mengklasifikasikan sampah" : "Login to classify waste"}</div>
+                <button
+                  onClick={() => setAuthDialogOpen(true)}
+                  className="mt-2 px-5 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-all"
+                >
+                  {language === "id" ? "Masuk / Daftar" : "Login / Register"}
+                </button>
+              </div>
+            </div>
+            <div ref={dialogRef}>
+              <AuthDialog isOpen={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
+            </div>
+          </>
+        )}
+
         {showWebcam && (
           <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center">
             <div className="bg-white rounded-lg p-4 flex flex-col items-center">
@@ -239,13 +282,13 @@ export function ImageUpload() {
               <div className="flex space-x-4">
                 <button
                   onClick={captureFromWebcam}
-                  className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800"
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
                 >
                   {language === "id" ? "Ambil Foto" : "Capture"}
                 </button>
                 <button
                   onClick={cancelWebcam}
-                  className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
+                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-all duration-300"
                 >
                   {language === "id" ? "Batal" : "Cancel"}
                 </button>
@@ -254,7 +297,6 @@ export function ImageUpload() {
           </div>
         )}
 
-        {/* Image Preview */}
         {selectedImage && (
           <div className="p-6 border-b">
             <div className="relative">
@@ -278,10 +320,8 @@ export function ImageUpload() {
           </div>
         )}
 
-        {/* Upload Area */}
         {!selectedImage && (
           <div className="relative">
-            {/* Hidden file inputs */}
             <input
               ref={fileInputRef}
               type="file"
@@ -298,7 +338,6 @@ export function ImageUpload() {
               className="hidden"
             />
 
-            {/* Main Upload Area */}
             <div
               className="p-8 border-2 border-dashed border-gray-300 rounded-lg m-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
               onDrop={handleDrop}
@@ -324,15 +363,12 @@ export function ImageUpload() {
               </div>
             </div>
 
-            {/* Upload Options Modal */}
             {showOptions && (
               <>
-                {/* Backdrop */}
                 <div 
                   className="fixed inset-0 bg-black bg-opacity-50 z-40"
                   onClick={() => setShowOptions(false)}
                 />
-                {/* Options Modal */}
                 <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto">
                   <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
                     <div className="p-4 border-b">
@@ -349,12 +385,11 @@ export function ImageUpload() {
                       </div>
                     </div>
                     <div className="p-4 space-y-3">
-                      {/* Camera Option */}
                       <button
                         onClick={openCamera}
-                        className="w-full flex items-center space-x-3 p-3 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                        className="w-full flex items-center space-x-3 p-3 text-left bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all duration-300 border border-emerald-200 hover:border-emerald-300"
                       >
-                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
                           <CameraIcon className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -366,12 +401,11 @@ export function ImageUpload() {
                           </p>
                         </div>
                       </button>
-                      {/* Gallery Option */}
                       <button
                         onClick={openGallery}
-                        className="w-full flex items-center space-x-3 p-3 text-left bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
+                        className="w-full flex items-center space-x-3 p-3 text-left bg-teal-50 hover:bg-teal-100 rounded-lg transition-all duration-300 border border-teal-200 hover:border-teal-300"
                       >
-                        <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
                           <Image className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -391,57 +425,21 @@ export function ImageUpload() {
           </div>
         )}
 
-        {/* Error Display */}
         {error && (
           <div className="mx-6 mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
             <p className="text-red-800 text-sm">{error}</p>
           </div>
         )}
 
-        {/* Classification Result Component */}
         <ClassificationResult 
           classificationResult={classificationResult}
           onNavigateToClassify={navigateToClassify}
           onClassifyAgain={resetUpload}
         />
 
-        {/* CLASSIFY BUTTON - TRIGGERS classifyModel */}
         {selectedImage && !classificationResult && (
           <div className="p-6 bg-gray-50 border-t">
-            {!isAuthenticated && (
-              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-center space-x-2">
-                  <Lock className="w-4 h-4 text-blue-600" />
-                  <p className="text-blue-800 text-sm">
-                    {language === "id" 
-                      ? "Login diperlukan untuk menggunakan fitur klasifikasi AI" 
-                      : "Login required to use AI classification feature"
-                    }
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {isAuthenticated && user?.plan === 'free' && (
-              <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-yellow-800 text-sm">
-                  {language === "id" 
-                    ? `Sisa klasifikasi hari ini: ${Math.max(0, 100 - (user?.usageCount || 0))}/100` 
-                    : `Remaining classifications today: ${Math.max(0, 100 - (user?.usageCount || 0))}/100`
-                  }
-                </p>
-                {user?.usageCount >= 100 && (
-                  <p className="text-yellow-800 text-xs mt-1">
-                    {language === "id" 
-                      ? "Upgrade ke Premium untuk 50 klasifikasi/hari!" 
-                      : "Upgrade to Premium for 50 classifications/day!"
-                    }
-                  </p>
-                )}
-              </div>
-            )}
-
-            {isClassifying ? (
+            {isLoading ? (
               <div className="flex items-center justify-center space-x-2 py-2">
                 <Loader2 className="w-5 h-5 animate-spin text-green-600" />
                 <span className="text-green-700">
@@ -451,31 +449,18 @@ export function ImageUpload() {
             ) : (
               <button
                 onClick={classifyImage}
-                disabled={isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100}
-                className={`w-full px-6 py-3 rounded-lg transition-colors font-medium ${
-                  !isAuthenticated 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : isAuthenticated && user?.plan === 'free' && user?.usageCount >= 100
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800 text-white'
-                }`}
+                className="w-full px-6 py-3 rounded-lg transition-all duration-300 font-medium transform hover:scale-105 shadow-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
               >
-                {!isAuthenticated 
-                  ? (language === "id" ? "Login untuk Klasifikasi" : "Login to Classify")
-                  : (language === "id" ? "Klasifikasi dengan AI" : "Classify with AI")
-                }
+                {language === "id" ? "Klasifikasi dengan AI" : "Classify with AI"}
               </button>
             )}
           </div>
         )}
       </div>
-
-      {/* Auth Dialog */}
-      <AuthDialog
-        isOpen={authDialogOpen}
-        onClose={() => setAuthDialogOpen(false)}
-        mode={authMode}
-        onSwitchMode={(mode) => setAuthMode(mode)}
+      <LimitReachedModal 
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        limitInfo={limitInfo}
       />
     </div>
   )

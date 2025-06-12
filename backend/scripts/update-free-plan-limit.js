@@ -1,6 +1,3 @@
-/**
- * This script updates the free plan usage limit from 100 to 30
- */
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -8,14 +5,12 @@ async function updateFreePlanLimit() {
   try {
     console.log('=== UPDATING FREE PLAN USAGE LIMIT ===\n');
     
-    // Get all free plan users
     const freeUsers = await prisma.user.findMany({
       where: { plan: 'free' }
     });
     
     console.log(`Found ${freeUsers.length} users with free plan`);
     
-    // Update usage limit
     const updateResult = await prisma.user.updateMany({
       where: { plan: 'free' },
       data: {
@@ -25,7 +20,6 @@ async function updateFreePlanLimit() {
     
     console.log(`✅ Successfully updated ${updateResult.count} users with free plan to have usage limit of 30`);
     
-    // Verify the update
     const verifyUsers = await prisma.user.findMany({
       where: { plan: 'free' },
       select: {

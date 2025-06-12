@@ -108,22 +108,26 @@ export function MapSection({ initialUserLocation, onLocationUpdate }) {
         <h2 className="mb-16 text-center text-3xl font-bold">{t("map.title")}</h2>
 
         <InteractiveMap userLocation={userLocation} onLocationUpdate={setUserLocation} />
-
-        <div className="mt-8 flex justify-center">
-          {!userLocation ? (
-            <Button
-              onClick={getCurrentLocation}
-              disabled={isGettingLocation}
-              className="bg-black text-white hover:bg-gray-800 flex items-center gap-2 disabled:opacity-50"
-            >
-              <MapPin className="h-4 w-4" />
-              {isGettingLocation
-                ? t("map.getLocation") === "Get location"
-                  ? "Getting location..."
-                  : "Mendapatkan lokasi..."
-                : t("map.getLocation")}
-            </Button>
-          ) : (
+        {/* Center the location button in the middle of the section if userLocation is not set */}
+        {!userLocation ? (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="pointer-events-auto">
+              <Button
+                onClick={getCurrentLocation}
+                disabled={isGettingLocation}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 disabled:opacity-50 transition-all duration-300 transform hover:scale-105 shadow-lg text-lg px-8 py-4"
+              >
+                <MapPin className="h-5 w-5" />
+                {isGettingLocation
+                  ? t("map.getLocation") === "Get location"
+                    ? "Getting location..."
+                    : "Mendapatkan lokasi..."
+                  : t("map.getLocation")}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-8 flex justify-center">
             <div className="flex gap-3">
               <Button
                 onClick={getCurrentLocation}
@@ -148,76 +152,8 @@ export function MapSection({ initialUserLocation, onLocationUpdate }) {
                 {t("map.clearLocation")}
               </Button>
             </div>
-          )}
-        </div>
-
-        {/* Success Dialog */}
-        <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-          <AlertDialogContent className="sm:max-w-md">
-            <AlertDialogHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-              </div>
-              <AlertDialogTitle className="text-xl font-bold text-gray-900">
-                {t("map.dialog.success.title")}
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-600 mt-2">
-                {t("map.dialog.success.description")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            
-            {locationData && (
-              <div className="bg-gray-50 rounded-lg p-4 my-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">
-                  {t("map.dialog.success.coordinates")}
-                </p>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <p>📍 Latitude: {locationData.latitude.toFixed(6)}</p>
-                  <p>📍 Longitude: {locationData.longitude.toFixed(6)}</p>
-                </div>
-              </div>
-            )}
-
-            <AlertDialogFooter>
-              <AlertDialogAction 
-                onClick={() => setShowSuccessDialog(false)}
-                className="w-full bg-black hover:bg-gray-800"
-              >
-                {t("map.dialog.success.button")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Error Dialog */}
-        <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-          <AlertDialogContent className="sm:max-w-md">
-            <AlertDialogHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-8 h-8 text-red-600" />
-                </div>
-              </div>
-              <AlertDialogTitle className="text-xl font-bold text-gray-900">
-                {t("map.dialog.error.title")}
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-600 mt-2">
-                {errorMessage}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-
-            <AlertDialogFooter>
-              <AlertDialogAction 
-                onClick={() => setShowErrorDialog(false)}
-                className="w-full bg-black hover:bg-gray-800"
-              >
-                {t("map.dialog.error.button")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          </div>
+        )}
       </div>
     </section>
   )

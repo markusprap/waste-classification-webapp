@@ -5,10 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
-/**
- * Upgrade to Premium button component
- * Displays a button that redirects to the payment process page
- */
 export default function UpgradeButton({ className }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -20,7 +16,7 @@ export default function UpgradeButton({ className }) {
   return (    <Button 
       onClick={handleUpgrade} 
       disabled={loading}
-      className={`${className} bg-black hover:bg-gray-800 text-white`}
+      className={`${className} bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all duration-300 transform hover:scale-105 shadow-lg`}
       variant="premium"
     >
       {loading ? (

@@ -1,6 +1,3 @@
-/**
- * This script updates subscription end dates for pending subscriptions
- */
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -8,7 +5,6 @@ async function updateSubscriptionEndDates() {
   try {
     console.log('=== UPDATING SUBSCRIPTION END DATES ===\n');
     
-    // Get all subscriptions without end dates
     const pendingSubscriptions = await prisma.subscription.findMany({
       where: { 
         endDate: null,
@@ -23,26 +19,22 @@ async function updateSubscriptionEndDates() {
     
     console.log(`Found ${pendingSubscriptions.length} subscriptions without end dates`);
     
-    // Update each subscription
     let successCount = 0;
     
     for (const sub of pendingSubscriptions) {
-      // Calculate end date (1 month from start date)
       const startDate = sub.startDate || new Date();
       const endDate = new Date(startDate);
       endDate.setMonth(endDate.getMonth() + 1);
       
-      // Update subscription
       await prisma.subscription.update({
         where: { id: sub.id },
         data: {
           endDate: endDate,
-          status: 'active', // Also update status to active
-          paymentStatus: 'settlement' // Update payment status
+          status: 'active',
+          paymentStatus: 'settlement'
         }
       });
       
-      // Update user plan to premium
       if (sub.userId) {
         await prisma.user.update({
           where: { id: sub.userId },
@@ -63,7 +55,6 @@ async function updateSubscriptionEndDates() {
     
     console.log(`Successfully updated ${successCount} subscriptions`);
     
-    // Verify the update
     const verifySubscriptions = await prisma.subscription.findMany({
       where: {
         id: {

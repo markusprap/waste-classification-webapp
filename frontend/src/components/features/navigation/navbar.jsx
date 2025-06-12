@@ -50,7 +50,6 @@ const navLinks = [
     <header className="w-full border-b border-gray-200 bg-white sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
             <Image 
               src="/images/logos/recycle-logo.png" 
@@ -62,7 +61,6 @@ const navLinks = [
             <span className="text-lg font-bold text-gray-900">WasteWise AI</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
               <Link
@@ -79,12 +77,10 @@ const navLinks = [
             ))}
           </nav>
 
-          {/* Desktop Language Switcher and Auth */}
           <div className="hidden md:flex items-center space-x-4">
-            <LanguageSwitcher />
-            <button
+            <LanguageSwitcher />            <button
               onClick={handleAuthClick}
-              className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium bg-black text-white hover:bg-gray-800 transition-colors duration-200"
+              className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               {isAuthenticated ? (
                 <>
@@ -100,7 +96,6 @@ const navLinks = [
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center space-x-2">
             <div className="block md:hidden">
               <LanguageSwitcher />
@@ -130,7 +125,6 @@ const navLinks = [
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
@@ -153,7 +147,6 @@ const navLinks = [
         )}
       </div>
 
-      {/* Auth Dialog */}
       <AuthDialog
         isOpen={authDialogOpen}
         onClose={() => setAuthDialogOpen(false)}
@@ -161,7 +154,6 @@ const navLinks = [
         onSwitchMode={handleAuthModeSwitch}
       />
 
-      {/* User Dashboard */}
       <UserDashboard
         isOpen={userDashboardOpen}
         onClose={() => setUserDashboardOpen(false)}

@@ -5,16 +5,12 @@ const sharp = require('sharp');
 const os = require('os');
 const fsSync = require('fs');
 
-// Article image constants
 const UPLOAD_DIR = path.join(process.cwd(), '../frontend/public/uploads/articles');
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
-const MAX_WIDTH = 1920; // Max width for article cover images
-const QUALITY = 80; // Image compression quality
+const MAX_WIDTH = 1920;
+const QUALITY = 80;
 
-/**
- * Ensures the upload directory exists
- */
 const ensureUploadDir = async () => {
   try {
     console.log('Checking upload directory:', UPLOAD_DIR);
@@ -25,11 +21,6 @@ const ensureUploadDir = async () => {
   }
 };
 
-/**
- * Generates a unique filename for uploaded images
- * @param {string} originalname - Original filename from upload
- * @returns {string} Generated unique filename
- */
 const generateFilename = (originalname) => {
   const ext = path.extname(originalname);
   const hash = crypto.randomBytes(8).toString('hex');
@@ -37,34 +28,27 @@ const generateFilename = (originalname) => {
   return `${timestamp}-${hash}${ext}`;
 };
 
-/**
- * Validates an image file
- * @param {object} file - File object from multer
- * @throws {Error} If validation fails
- */
 const validateImage = (file) => {
-  // Log file information for debugging
   console.log('Validating image file:', file ? 
     {
       type: typeof file, 
-      mimetype: file.mimetype, 
+      mimetype: file.mimetype || file.type,
       size: file.size,
       hasBuffer: !!file.buffer,
       hasPath: !!file.path,
-      hasHapi: !!file.hapi
+      hasHapi: !!file.hapi,
+      originalFilename: file.originalFilename || file.name
     } : 'null');
     
   if (!file) {
     throw new Error('No file uploaded');
   }
 
-  // Handle hapi file structure if present
   if (file.hapi && file.hapi.filename) {
     if (!ALLOWED_TYPES.includes(file.hapi.headers['content-type'])) {
       throw new Error(`Invalid file type: ${file.hapi.headers['content-type']}. Only PNG, JPG, and GIF are allowed`);
     }
     
-    // Check file size if available
     const fileSize = file.hapi.bytes || 0;
     if (fileSize > MAX_FILE_SIZE) {
       throw new Error(`File too large: ${fileSize} bytes. Maximum size is 10MB`);
@@ -73,27 +57,19 @@ const validateImage = (file) => {
     return;
   }
   
-  // Regular file check for mimetype
   if (!ALLOWED_TYPES.includes(file.mimetype)) {
     throw new Error(`Invalid file type: ${file.mimetype}. Only PNG, JPG, and GIF are allowed`);
   }
 
-  // Check file size if available
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(`File too large: ${file.size} bytes. Maximum size is 10MB`);
   }
 };
 
-/**
- * Process and store an uploaded article image
- * @param {object} file - File object from multer
- * @returns {object} Stored file metadata
- */
 const storeArticleImage = async (file) => {
   try {
     console.log('storeArticleImage called with:', typeof file, file ? Object.keys(file) : 'null');
     
-    // If file is a string (URL path), handle it differently
     if (typeof file === 'string') {
       console.log('Handling file as string URL:', file);
       const filename = file.split('/').pop();
@@ -102,15 +78,13 @@ const storeArticleImage = async (file) => {
         originalname: filename,
         mimetype: filename.endsWith('.jpg') || filename.endsWith('.jpeg') ? 'image/jpeg' : 
                  filename.endsWith('.png') ? 'image/png' : 'image/gif',
-        size: 0 // Size unknown for URL strings
+        size: 0
       };
     }
 
-    // Validate the file
     validateImage(file);
     await ensureUploadDir();
 
-    // Handle filename generation based on file structure
     let originalFilename = 'image.jpg';
     if (file.hapi && file.hapi.filename) {
       originalFilename = file.hapi.filename;
@@ -121,9 +95,8 @@ const storeArticleImage = async (file) => {
     const filename = generateFilename(originalFilename);
     const filepath = path.join(UPLOAD_DIR, filename);
 
-    console.log('Processing image and saving to:', filepath);    // Handle different file structures from different sources
+    console.log('Processing image and saving to:', filepath);
     if (file.buffer) {
-      // Handle buffer from multer/formidable/etc
       console.log('Processing file from buffer, size:', file.buffer.length);
       try {
         await sharp(file.buffer)
@@ -136,12 +109,10 @@ const storeArticleImage = async (file) => {
         console.log('Successfully processed and saved buffer to file');
       } catch (sharpError) {
         console.error('Sharp processing error for buffer:', sharpError);
-        // Fallback to direct file save if sharp fails
         await fs.writeFile(filepath, file.buffer);
         console.log('Fallback: Directly saved buffer to file');
       }
     } else if (file.path) {
-      // Handle file with path (from disk)
       console.log('Processing file from path:', file.path);
       await sharp(file.path)
         .resize(MAX_WIDTH, null, { 
@@ -149,11 +120,10 @@ const storeArticleImage = async (file) => {
           fit: 'inside' 
         })
         .jpeg({ quality: QUALITY })
-        .toFile(filepath);    } else if (file.hapi) {
-      // Handle Hapi file structure
+        .toFile(filepath);
+    } else if (file.hapi) {
       console.log('Processing file from Hapi with keys:', Object.keys(file));
       
-      // Try different ways to get the buffer from Hapi file object
       let buffer = null;
       
       if (file._data) {
@@ -166,14 +136,12 @@ const storeArticleImage = async (file) => {
         console.log('Using _bytes property');
         buffer = file._bytes;
       } else if (file.hapi && file.hapi.filename) {
-        // Try to get the raw data from the Hapi request
         console.log('Trying to get data from hapi property');
         if (file._tap && file._tap.payload) {
           buffer = file._tap.payload;
         } else {
           console.log('Hapi file structure found but no data. Available properties:', 
             Object.keys(file.hapi));
-            // Last resort: try to read from the temp file if it exists
           if (file.hapi.filename) {
             const tempPath = path.join(os.tmpdir(), file.hapi.filename);
             if (fsSync.existsSync(tempPath)) {
@@ -201,15 +169,57 @@ const storeArticleImage = async (file) => {
         console.log('Successfully processed and saved Hapi file');
       } catch (sharpError) {
         console.error('Sharp processing error for Hapi file:', sharpError);
-        // Fallback to direct file save if sharp fails
         await fs.writeFile(filepath, buffer);
         console.log('Fallback: Directly saved Hapi file data to file');
       }
     } else {
-      throw new Error('Unsupported file format');
+      console.error('Unsupported file format received in storeArticleImage. File object:', file);
+      if (file && typeof file === 'object') {
+        console.error('File object keys:', Object.keys(file));
+      }
+      throw new Error('Unsupported file format: The uploaded file does not match any known structure (buffer, path, hapi). Please check the upload handler and client.');
     }
 
-    // Prepare and return the file metadata
+    if (file.filepath && !file.buffer && !file.path && !file.hapi) {
+      try {
+        const buffer = await fs.readFile(file.filepath);
+        file = {
+          buffer,
+          mimetype: file.mimetype || file.type || 'image/jpeg',
+          originalname: file.originalFilename || file.name || 'image.jpg',
+          size: file.size || buffer.length
+        };
+        validateImage(file);
+        let originalFilename = file.originalname;
+        const filename = generateFilename(originalFilename);
+        const filepath = path.join(UPLOAD_DIR, filename);
+        console.log('Processing formidable file as buffer, size:', buffer.length);
+        try {
+          await sharp(buffer)
+            .resize(MAX_WIDTH, null, { 
+              withoutEnlargement: true,
+              fit: 'inside' 
+            })
+            .jpeg({ quality: QUALITY })
+            .toFile(filepath);
+          console.log('Successfully processed and saved formidable buffer to file');
+        } catch (sharpError) {
+          console.error('Sharp processing error for formidable buffer:', sharpError);
+          await fs.writeFile(filepath, buffer);
+          console.log('Fallback: Directly saved formidable buffer to file');
+        }
+        return {
+          filename,
+          originalname: originalFilename,
+          size: file.size,
+          mimetype: file.mimetype
+        };
+      } catch (err) {
+        console.error('Error handling formidable filepath fallback:', err);
+        throw new Error('Failed to process uploaded image file');
+      }
+    }
+
     let fileSize = 0;
     let fileMimetype = 'image/jpeg';
     
@@ -233,10 +243,6 @@ const storeArticleImage = async (file) => {
   }
 };
 
-/**
- * Delete a stored article image
- * @param {string} filename - Name of file to delete
- */
 const deleteArticleImage = async (filename) => {
   if (!filename) return;
   
@@ -245,7 +251,6 @@ const deleteArticleImage = async (filename) => {
     await fs.unlink(filepath);
   } catch (error) {
     console.error('Error deleting file:', error);
-    // Don't throw - file may already be deleted
   }
 };
 

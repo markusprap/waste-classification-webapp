@@ -1,4 +1,3 @@
-// clean-users.js - Script to clean user data for testing
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -6,7 +5,6 @@ async function cleanUsers() {
   try {
     console.log('🧹 Cleaning user data...');
     
-    // Delete all related data first (foreign key constraints)
     console.log('Deleting subscriptions...');
     await prisma.subscription.deleteMany({});
     
@@ -33,5 +31,4 @@ async function cleanUsers() {
   }
 }
 
-// Run the cleanup
 cleanUsers().catch(console.error);

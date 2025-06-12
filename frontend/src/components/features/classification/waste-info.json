@@ -1,0 +1,212 @@
+{
+  "Alat_Pembersih_Kimia": {
+    "disposal": {
+      "id": "Buang di TPS B3 atau tempat sampah khusus bahan kimia.",
+      "en": "Dispose at hazardous waste (B3) collection points."
+    },
+    "recommendation": {
+      "id": "Gunakan secukupnya dan pilih produk ramah lingkungan.",
+      "en": "Use as needed and choose eco-friendly products."
+    },
+    "environmental_impact": {
+      "id": "Dapat mencemari air dan tanah jika dibuang sembarangan.",
+      "en": "Can pollute water and soil if disposed carelessly."
+    }
+  },
+  "Alumunium": {
+    "disposal": {
+      "id": "Kumpulkan dan jual ke pengepul atau bank sampah.",
+      "en": "Collect and sell to scrap collectors or waste banks."
+    },
+    "recommendation": {
+      "id": "Bersihkan sebelum dikumpulkan agar mudah didaur ulang.",
+      "en": "Clean before collecting for easier recycling."
+    },
+    "environmental_impact": {
+      "id": "Dapat didaur ulang tanpa batas, menghemat sumber daya alam.",
+      "en": "Infinitely recyclable, saves natural resources."
+    }
+  },
+  "Baterai": {
+    "disposal": {
+      "id": "Jangan buang ke sampah biasa, serahkan ke dropbox baterai.",
+      "en": "Do not throw in regular trash, hand over to battery dropbox."
+    },
+    "recommendation": {
+      "id": "Kumpulkan terpisah dan serahkan ke dropbox baterai.",
+      "en": "Collect separately and hand over to battery dropbox."
+    },
+    "environmental_impact": {
+      "id": "Mengandung logam berat yang berbahaya bagi lingkungan.",
+      "en": "Contains heavy metals hazardous to the environment."
+    }
+  },
+  "Kaca": {
+    "disposal": {
+      "id": "Pisahkan dan buang di tempat sampah kaca atau bank sampah.",
+      "en": "Separate and dispose in glass bin or waste bank."
+    },
+    "recommendation": {
+      "id": "Pisahkan berdasarkan warna jika memungkinkan.",
+      "en": "Separate by color if possible."
+    },
+    "environmental_impact": {
+      "id": "Dapat didaur ulang berkali-kali tanpa kehilangan kualitas.",
+      "en": "Can be recycled endlessly without loss of quality."
+    }
+  },
+  "Kardus": {
+    "disposal": {
+      "id": "Lipat dan kumpulkan untuk didaur ulang.",
+      "en": "Flatten and collect for recycling."
+    },
+    "recommendation": {
+      "id": "Jaga agar tetap kering agar mudah didaur ulang.",
+      "en": "Keep dry for easier recycling."
+    },
+    "environmental_impact": {
+      "id": "Mengurangi penebangan pohon jika didaur ulang.",
+      "en": "Reduces tree cutting if recycled."
+    }
+  },
+  "Karet": {
+    "disposal": {
+      "id": "Kumpulkan dan serahkan ke bank sampah atau pengepul.",
+      "en": "Collect and hand over to waste bank or collectors."
+    },
+    "recommendation": {
+      "id": "Manfaatkan kembali jika memungkinkan.",
+      "en": "Reuse if possible."
+    },
+    "environmental_impact": {
+      "id": "Sulit terurai, dapat mencemari lingkungan jika dibakar.",
+      "en": "Hard to decompose, can pollute if burned."
+    }
+  },
+  "Kertas": {
+    "disposal": {
+      "id": "Pisahkan dan kumpulkan untuk didaur ulang.",
+      "en": "Separate and collect for recycling."
+    },
+    "recommendation": {
+      "id": "Jangan campur dengan sampah basah.",
+      "en": "Do not mix with wet waste."
+    },
+    "environmental_impact": {
+      "id": "Daur ulang kertas menghemat energi dan air.",
+      "en": "Recycling paper saves energy and water."
+    }
+  },
+  "Lampu_dan_Elektronik": {
+    "disposal": {
+      "id": "Serahkan ke dropbox elektronik atau TPS B3.",
+      "en": "Hand over to electronics dropbox or hazardous waste collection."
+    },
+    "recommendation": {
+      "id": "Jangan dibongkar sendiri, serahkan ke fasilitas resmi.",
+      "en": "Do not dismantle yourself, hand over to official facilities."
+    },
+    "environmental_impact": {
+      "id": "Mengandung bahan berbahaya, dapat mencemari lingkungan.",
+      "en": "Contains hazardous materials, can pollute the environment."
+    }
+  },
+  "Minyak_dan_Oli_Bekas": {
+    "disposal": {
+      "id": "Jangan buang ke saluran air, serahkan ke pengelola limbah.",
+      "en": "Do not pour into drains, hand over to waste managers."
+    },
+    "recommendation": {
+      "id": "Gunakan kembali jika memungkinkan, jangan buang sembarangan.",
+      "en": "Reuse if possible, do not dispose carelessly."
+    },
+    "environmental_impact": {
+      "id": "Dapat mencemari air dan tanah secara serius.",
+      "en": "Can seriously pollute water and soil."
+    }
+  },
+  "Obat_dan_Medis": {
+    "disposal": {
+      "id": "Serahkan ke apotek atau fasilitas kesehatan.",
+      "en": "Hand over to pharmacies or health facilities."
+    },
+    "recommendation": {
+      "id": "Jangan buang ke toilet/sungai.",
+      "en": "Do not throw into toilet/river."
+    },
+    "environmental_impact": {
+      "id": "Obat kadaluarsa dapat mencemari air jika dibuang sembarangan.",
+      "en": "Expired medicine can pollute water if disposed carelessly."
+    }
+  },
+  "Plastik": {
+    "disposal": {
+      "id": "Pisahkan dan kumpulkan untuk didaur ulang.",
+      "en": "Separate and collect for recycling."
+    },
+    "recommendation": {
+      "id": "Kurangi penggunaan plastik sekali pakai.",
+      "en": "Reduce single-use plastic."
+    },
+    "environmental_impact": {
+      "id": "Sulit terurai, mencemari lingkungan dan laut.",
+      "en": "Hard to decompose, pollutes land and sea."
+    }
+  },
+  "Sisa_Buah_dan_Sayur": {
+    "disposal": {
+      "id": "Dapat dijadikan kompos atau pakan ternak.",
+      "en": "Can be composted or used as animal feed."
+    },
+    "recommendation": {
+      "id": "Jadikan kompos untuk pupuk alami.",
+      "en": "Compost for natural fertilizer."
+    },
+    "environmental_impact": {
+      "id": "Jika dibuang sembarangan dapat menimbulkan bau dan gas rumah kaca.",
+      "en": "If disposed carelessly, can cause odor and greenhouse gases."
+    }
+  },
+  "Sisa_Makanan": {
+    "disposal": {
+      "id": "Dapat dijadikan kompos atau pakan ternak.",
+      "en": "Can be composted or used as animal feed."
+    },
+    "recommendation": {
+      "id": "Jadikan kompos untuk pupuk alami.",
+      "en": "Compost for natural fertilizer."
+    },
+    "environmental_impact": {
+      "id": "Jika dibuang sembarangan dapat menimbulkan bau dan gas rumah kaca.",
+      "en": "If disposed carelessly, can cause odor and greenhouse gases."
+    }
+  },
+  "Styrofoam": {
+    "disposal": {
+      "id": "Kurangi penggunaan, buang di tempat sampah residu.",
+      "en": "Reduce use, dispose in residual waste bin."
+    },
+    "recommendation": {
+      "id": "Hindari penggunaan styrofoam.",
+      "en": "Avoid using styrofoam."
+    },
+    "environmental_impact": {
+      "id": "Sulit didaur ulang dan mencemari lingkungan.",
+      "en": "Hard to recycle and pollutes the environment."
+    }
+  },
+  "Tekstil": {
+    "disposal": {
+      "id": "Sumbangkan jika masih layak pakai, atau daur ulang.",
+      "en": "Donate if still usable, or recycle."
+    },
+    "recommendation": {
+      "id": "Daur ulang atau donasikan jika masih layak.",
+      "en": "Recycle or donate if still usable."
+    },
+    "environmental_impact": {
+      "id": "Jika dibuang sembarangan menambah volume sampah dan polusi.",
+      "en": "If disposed carelessly, increases waste volume and pollution."
+    }
+  }
+}

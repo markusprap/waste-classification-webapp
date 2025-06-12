@@ -69,7 +69,6 @@ export default function WasteAIAboutSection() {
   return (
     <section className="pt-24 pb-20 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
       <div className="container mx-auto px-4">
-        {/* Hero Content */}
         <div className="text-center max-w-4xl mx-auto mb-16">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             {t.title}
@@ -82,7 +81,6 @@ export default function WasteAIAboutSection() {
           </p>
         </div>
 
-        {/* Objectives Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           {t.objectives.map((objective, index) => {
             const IconComponent = objective.icon;

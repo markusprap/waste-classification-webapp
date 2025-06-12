@@ -15,7 +15,6 @@ export default function PaymentProcessPage() {
   const [error, setError] = useState(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   
-  // Initialize Midtrans when component mounts
   useEffect(() => {
     if (status === 'loading') return;
     
@@ -24,10 +23,8 @@ export default function PaymentProcessPage() {
       return;
     }
     
-    // Initialize Midtrans
     const script = initMidtrans();
     
-    // Cleanup function to remove script when component unmounts
     return () => {
       if (script && script.parentNode) {
         script.parentNode.removeChild(script);
@@ -43,16 +40,13 @@ export default function PaymentProcessPage() {
     }
   }, [session, status]);
   
-  // Handle payment process
   const handlePayment = async () => {
     try {
       setProcessingPayment(true);
       setError(null);
       
-      // Process payment for premium upgrade
       const result = await processPremiumUpgrade(session.user);
       
-      // Handle payment result
       if (result.success) {
         if (result.status === 'pending') {
           router.push('/payment/pending');
@@ -104,9 +98,8 @@ export default function PaymentProcessPage() {
               </div>
             )}
           </div>
-        </CardContent>        <CardFooter>
-          <Button 
-            className="w-full bg-black hover:bg-gray-800 text-white" 
+        </CardContent>        <CardFooter>          <Button 
+            className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all duration-300 transform hover:scale-105 shadow-lg" 
             onClick={handlePayment} 
             disabled={processingPayment}
           >

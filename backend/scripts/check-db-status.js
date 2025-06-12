@@ -5,7 +5,6 @@ async function checkDatabase() {
   try {
     console.log('=== CHECKING DATABASE STATUS ===\n');
     
-    // Get all users
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       take: 10
@@ -23,7 +22,6 @@ async function checkDatabase() {
       console.log('');
     });
     
-    // Get all subscriptions
     const subscriptions = await prisma.subscription.findMany({
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -47,7 +45,6 @@ async function checkDatabase() {
       console.log(`   Created: ${sub.createdAt}`);
       console.log('');
     });
-      // Get all transactions (check if model exists first)
     try {
       if (prisma.transaction) {
         const transactions = await prisma.transaction.findMany({

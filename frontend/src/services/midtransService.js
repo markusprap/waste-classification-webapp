@@ -1,21 +1,14 @@
-/**
- * Midtrans service for handling payment integration
- */
-
-// Generate unique order ID
 export const generateOrderId = () => {
   const timestamp = Date.now();
   const random = Math.floor(Math.random() * 1000);
   return `ORDER-${timestamp}-${random}`;
 };
 
-// Initialize Midtrans Snap
 export const initMidtrans = () => {
-  if (typeof window === 'undefined') return Promise.resolve(); // Only run on client side
+  if (typeof window === 'undefined') return Promise.resolve();
   
   return new Promise((resolve, reject) => {
     if (window.snap) {
-      console.log('Midtrans Snap already initialized, skipping');
       resolve();
       return;
     }
@@ -29,16 +22,11 @@ export const initMidtrans = () => {
     
     const isSandbox = !process.env.NEXT_PUBLIC_MIDTRANS_ENV || process.env.NEXT_PUBLIC_MIDTRANS_ENV === 'sandbox';
     
-    console.log('Initializing Midtrans Snap...');
-    console.log('- Environment:', isSandbox ? 'sandbox' : 'production');
-    console.log('- Client Key:', clientKey ? 'SET' : 'NOT SET');
-    
-    // Remove existing script if any
     const existingScript = document.querySelector('script[src*="snap.js"]');
     if (existingScript) {
       existingScript.remove();
     }
-      // Load Midtrans script
+
     const script = document.createElement('script');
     script.src = isSandbox 
       ? 'https://app.sandbox.midtrans.com/snap/snap.js' 
@@ -46,41 +34,32 @@ export const initMidtrans = () => {
     script.setAttribute('data-client-key', clientKey);
     script.async = true;
     script.defer = true;
-    script.crossOrigin = "anonymous"; // Add this line for better compatibility
+    script.crossOrigin = "anonymous";
     
     let timeoutId;
-    
-    // Add onload handler
+
     script.onload = () => {
-      console.log('Midtrans Snap script loaded successfully');
       clearTimeout(timeoutId);
       
-      // Wait a bit for snap to be available
       setTimeout(() => {
         if (window.snap) {
-          console.log('window.snap is now available');
           resolve();
         } else {
-          console.error('window.snap not available after script load');
           reject(new Error('Midtrans Snap initialization failed'));
         }
-      }, 1000); // Increased timeout to give more time for snap to initialize
+      }, 1000);
     };
     
-    // Improved error handling
     script.onerror = () => {
       console.error('Error loading Midtrans Snap script');
       clearTimeout(timeoutId);
       
-      // Try one more time with a different approach
       console.log('Retrying script load with alternative method...');
       
-      // Remove the failed script
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
       
-      // Create a new script with slightly different attributes
       const retryScript = document.createElement('script');
       retryScript.src = isSandbox 
         ? 'https://app.sandbox.midtrans.com/snap/snap.js' 
@@ -113,7 +92,6 @@ export const initMidtrans = () => {
       document.head.appendChild(retryScript);
     };
     
-    // Set timeout for script loading
     timeoutId = setTimeout(() => {
       console.error('Midtrans script loading timeout');
       reject(new Error('Midtrans script loading timeout'));
@@ -121,7 +99,6 @@ export const initMidtrans = () => {
     
     document.head.appendChild(script);
     
-    // Add global callback function
     window.handleMidtransResponse = function(result) {
       console.log('Transaction status:', result.status_code);
       console.log('Transaction ID:', result.transaction_id);
@@ -129,7 +106,6 @@ export const initMidtrans = () => {
   });
 };
 
-// Get Midtrans client key from backend
 export const getMidtransClientKey = async () => {
   try {
     const response = await fetch('/api/payment/client-key');
@@ -146,7 +122,6 @@ export const getMidtransClientKey = async () => {
   }
 };
 
-// Create payment transaction
 export const createPaymentTransaction = async (customerDetails) => {
   try {
     console.log('Creating payment transaction with details:', customerDetails);
@@ -159,7 +134,7 @@ export const createPaymentTransaction = async (customerDetails) => {
       body: JSON.stringify({
         ...customerDetails,
         plan: 'premium',
-        amount: 99000, // Premium plan price
+        amount: 99000,
         currency: 'IDR'
       })
     });
@@ -188,7 +163,6 @@ export const createPaymentTransaction = async (customerDetails) => {
   }
 };
 
-// Open Midtrans Snap payment popup
 export const openSnapPayment = async (token) => {
   if (typeof window === 'undefined') {
     console.error('Window is not defined');
@@ -196,17 +170,16 @@ export const openSnapPayment = async (token) => {
   }
 
   console.log('Opening Snap payment with token:', token);
-  // Ensure Midtrans is initialized
+
   try {
     await initMidtrans();
     
-    // Wait for window.snap to be available
     let attempts = 0;
-    const maxAttempts = 15; // Increased attempts
+    const maxAttempts = 15;
     
     while (!window.snap && attempts < maxAttempts) {
       console.log(`Waiting for window.snap to be available (attempt ${attempts + 1}/${maxAttempts})...`);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Increased wait time
+      await new Promise(resolve => setTimeout(resolve, 1000));
       attempts++;
     }
     
@@ -215,19 +188,15 @@ export const openSnapPayment = async (token) => {
     return Promise.reject({ success: false, error: 'Payment service initialization failed' });
   }
 
-  // Double check that snap is available
   if (!window.snap) {
     console.error('window.snap is still not available after initialization');
     
-    // Last resort: try to reload the script manually
     try {
       console.log('Attempting to reload Midtrans script as last resort...');
       
-      // Remove any existing scripts
       const existingScripts = document.querySelectorAll('script[src*="snap.js"]');
       existingScripts.forEach(s => s.remove());
       
-      // Force reload the script
       const lastResortScript = document.createElement('script');
       const isSandbox = !process.env.NEXT_PUBLIC_MIDTRANS_ENV || process.env.NEXT_PUBLIC_MIDTRANS_ENV === 'sandbox';
       const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
@@ -240,13 +209,11 @@ export const openSnapPayment = async (token) => {
       
       document.head.appendChild(lastResortScript);
       
-      // Wait for it to load
       await new Promise(resolve => {
         lastResortScript.onload = resolve;
-        setTimeout(resolve, 3000); // Timeout after 3 seconds
+        setTimeout(resolve, 3000);
       });
       
-      // Check again
       if (!window.snap) {
         return Promise.reject({ success: false, error: 'Payment service is not ready after multiple attempts' });
       }
@@ -254,9 +221,10 @@ export const openSnapPayment = async (token) => {
       console.error('Last resort loading failed:', err);
       return Promise.reject({ success: false, error: 'Payment service is not ready' });
     }
-  }  return new Promise((resolve, reject) => {
+  }
+
+  return new Promise((resolve, reject) => {
     try {
-      // Check token validity
       if (!token || typeof token !== 'string' || token.trim() === '') {
         console.error('Invalid token provided:', token);
         reject({ success: false, error: 'Invalid payment token' });
@@ -265,17 +233,14 @@ export const openSnapPayment = async (token) => {
       
       console.log('Calling window.snap.pay with token:', token);
       
-      // Make sure window.snap.pay is a function
       if (typeof window.snap.pay !== 'function') {
         console.error('window.snap.pay is not a function');
         reject({ success: false, error: 'Payment service is not properly initialized' });
         return;
       }
       
-      // Add a small delay before calling snap.pay
       setTimeout(() => {
         try {
-          // Define callbacks before calling snap.pay
           const onSuccessCallback = function(result) {
             console.log('Payment success:', result);
             resolve({ success: true, data: result });
@@ -283,7 +248,6 @@ export const openSnapPayment = async (token) => {
           
           const onPendingCallback = function(result) {
             console.log('Payment pending:', result);
-            // Extract VA number and bank info
             let message = 'Menunggu pembayaran...';
             if (result.va_numbers && result.va_numbers.length > 0) {
               const va = result.va_numbers[0];
@@ -309,14 +273,12 @@ export const openSnapPayment = async (token) => {
           };
           
           const onCloseCallback = function() {
-            // Only reject if payment hasn't been initiated
             if (!window.snap.isPaymentProcessing) {
               console.log('Customer closed the payment popup without finishing payment');
               reject({ success: false, error: 'Payment popup closed' });
             }
           };
           
-          // Call snap.pay with defined callbacks
           window.snap.pay(token, {
             onSuccess: onSuccessCallback,
             onPending: onPendingCallback,
@@ -328,7 +290,7 @@ export const openSnapPayment = async (token) => {
           console.error('Error inside snap.pay call:', innerError);
           reject({ success: false, error: 'Error calling payment service: ' + (innerError.message || 'Unknown error') });
         }
-      }, 1000); // Increased delay to 1000ms
+      }, 1000);
     } catch (error) {
       console.error('Error when setting up snap.pay:', error);
       reject({ success: false, error: 'Error initiating payment: ' + (error.message || 'Unknown error') });
@@ -336,7 +298,6 @@ export const openSnapPayment = async (token) => {
   });
 };
 
-// Process payment for premium plan upgrade
 export const processPremiumUpgrade = async (user) => {
   try {
     if (!user || !user.email) {
@@ -345,7 +306,6 @@ export const processPremiumUpgrade = async (user) => {
     
     console.log('Processing premium upgrade for user:', user.email);
     
-    // Create payment transaction
     const transaction = await createPaymentTransaction({
       email: user.email,
       name: user.name || 'User',
@@ -359,11 +319,9 @@ export const processPremiumUpgrade = async (user) => {
     
     console.log('Transaction created successfully, token received');
     
-    // Open Snap payment popup and return the result
     return await openSnapPayment(transaction.data.token);
   } catch (error) {
     console.error('Error processing payment:', error);
-    // Properly format the error for the calling code
     return {
       success: false,
       error: error.message || 'An error occurred during payment processing'

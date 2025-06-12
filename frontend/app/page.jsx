@@ -7,7 +7,6 @@ import { TechnologiesSection } from "@/components/features/home/technologies-sec
 import { Footer } from "@/components/features/shared/footer"
 import { ScrollToTop } from "@/components/features/shared/scroll-to-top"
 
-// Disable static optimization for this page because it uses auth context
 export const dynamic = 'force-dynamic'
 
 export default function Home() {

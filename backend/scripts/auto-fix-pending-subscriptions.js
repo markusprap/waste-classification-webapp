@@ -1,7 +1,3 @@
-/**
- * Auto-fix pending subscriptions - no user input required
- * This script automatically activates all pending subscriptions
- */
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -9,7 +5,6 @@ async function autoFixPendingSubscriptions() {
   try {
     console.log('🔧 Auto-fixing pending subscriptions...');
     
-    // Get all pending subscriptions
     const pendingSubscriptions = await prisma.subscription.findMany({
       where: { 
         status: 'pending',
@@ -31,7 +26,6 @@ async function autoFixPendingSubscriptions() {
     let successCount = 0;
     let errorCount = 0;
     
-    // Process each subscription
     for (const sub of pendingSubscriptions) {
       try {
         const user = sub.user;
@@ -44,11 +38,9 @@ async function autoFixPendingSubscriptions() {
         
         console.log(`⚙️  Processing ${user.email}...`);
         
-        // Calculate end date (1 month from now)
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + 1);
         
-        // 1. Update subscription to active
         await prisma.subscription.update({
           where: { id: sub.id },
           data: {
@@ -58,12 +50,11 @@ async function autoFixPendingSubscriptions() {
           }
         });
         
-        // 2. Update user plan to premium
         await prisma.user.update({
           where: { id: user.id },
           data: {
             plan: 'premium',
-            usageLimit: 10000 // Standard premium limit
+            usageLimit: 10000
           }
         });
         
@@ -94,5 +85,4 @@ async function autoFixPendingSubscriptions() {
   }
 }
 
-// Run the script
 autoFixPendingSubscriptions().catch(console.error);

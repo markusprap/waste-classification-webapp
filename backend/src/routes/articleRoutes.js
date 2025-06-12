@@ -2,7 +2,6 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 module.exports = [
-  // Get all articles with pagination and filters
   {
     method: 'GET',
     path: '/api/articles',
@@ -11,7 +10,6 @@ module.exports = [
         const { page = 1, limit = 12, category, search } = request.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
         
-        // Build where clause
         const where = {
           isPublished: true,
           ...(category && { category }),
@@ -24,7 +22,6 @@ module.exports = [
           })
         };
         
-        // Get articles with pagination
         const [articles, total] = await Promise.all([
           prisma.article.findMany({
             where,
@@ -67,7 +64,6 @@ module.exports = [
     }
   },
 
-  // Get article categories
   {
     method: 'GET',
     path: '/api/articles/categories',
@@ -97,7 +93,6 @@ module.exports = [
     }
   },
 
-  // Get article by slug
   {
     method: 'GET',
     path: '/api/articles/{slug}',
@@ -105,7 +100,6 @@ module.exports = [
       try {
         const { slug } = request.params;
         
-        // Get article by slug
         const article = await prisma.article.findUnique({
           where: { 
             slug,
@@ -117,13 +111,11 @@ module.exports = [
           return h.response({ error: 'Article not found' }).code(404);
         }
         
-        // Increment view count
         await prisma.article.update({
           where: { id: article.id },
           data: { viewCount: { increment: 1 } }
         });
         
-        // Get related articles
         const relatedArticles = await prisma.article.findMany({
           where: {
             category: article.category,

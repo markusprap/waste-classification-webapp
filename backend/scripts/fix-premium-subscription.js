@@ -1,7 +1,3 @@
-/**
- * This script fixes premium subscriptions that are stuck in "pending" status
- * by updating them to "active" status and updating the user's plan to "premium"
- */
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -9,7 +5,6 @@ async function fixPremiumSubscriptions() {
   try {
     console.log('=== FIXING PREMIUM SUBSCRIPTIONS ===\n');
     
-    // Get pending subscriptions
     const pendingSubscriptions = await prisma.subscription.findMany({
       where: { status: 'pending' },
       include: {
@@ -20,7 +15,6 @@ async function fixPremiumSubscriptions() {
     
     console.log(`Found ${pendingSubscriptions.length} pending subscriptions\n`);
     
-    // Ask for user email to fix
     const readline = require('readline').createInterface({
       input: process.stdin,
       output: process.stdout
@@ -29,7 +23,6 @@ async function fixPremiumSubscriptions() {
     readline.question('Enter user email to fix (leave empty to fix all): ', async (email) => {
       let subscriptionsToFix = pendingSubscriptions;
       
-      // Filter by email if provided
       if (email && email.trim() !== '') {
         subscriptionsToFix = pendingSubscriptions.filter(sub => 
           sub.user && sub.user.email === email.trim()
@@ -44,7 +37,6 @@ async function fixPremiumSubscriptions() {
         return;
       }
       
-      // Confirm with user
       readline.question(`Are you sure you want to fix ${subscriptionsToFix.length} subscription(s)? (yes/no): `, async (answer) => {
         if (answer.toLowerCase() !== 'yes') {
           console.log('Operation cancelled.');
@@ -56,7 +48,6 @@ async function fixPremiumSubscriptions() {
         let successCount = 0;
         let errorCount = 0;
         
-        // Process each subscription
         for (const sub of subscriptionsToFix) {
           try {
             const userId = sub.userId;
@@ -70,7 +61,6 @@ async function fixPremiumSubscriptions() {
             
             console.log(`Processing subscription for ${user.email}...`);
             
-            // 1. Update subscription to active
             await prisma.subscription.update({
               where: { id: sub.id },
               data: {
@@ -80,12 +70,11 @@ async function fixPremiumSubscriptions() {
               }
             });
             
-            // 2. Update user plan to premium
             await prisma.user.update({
               where: { id: userId },
               data: {
                 plan: 'premium',
-                usageLimit: 999999 // Practically unlimited for premium
+                usageLimit: 999999
               }
             });
             

@@ -1,4 +1,3 @@
-// Admin routes untuk Hapi.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -10,14 +9,12 @@ module.exports = [
       try {
         const payload = request.payload;
         
-        // Validasi data
         if (!payload.title || !payload.slug || !payload.content || !payload.category) {
           return h.response({ 
             error: 'Data tidak lengkap. Harap isi semua field yang wajib.' 
           }).code(400);
         }
         
-        // Cek apakah slug sudah ada
         const existingArticle = await prisma.article.findUnique({
           where: { slug: payload.slug }
         });
@@ -28,7 +25,6 @@ module.exports = [
           }).code(409);
         }
         
-        // Buat artikel baru
         const article = await prisma.article.create({
           data: {
             title: payload.title,
@@ -71,13 +67,12 @@ module.exports = [
       try {
         const { id } = request.params;
         
-        // Validasi ID
         if (!id) {
           return h.response({ 
             error: 'ID artikel tidak valid.' 
           }).code(400);
         }
-          // Cek apakah artikel ada
+          
         const article = await prisma.article.findUnique({
           where: { id: id }
         });
@@ -88,7 +83,6 @@ module.exports = [
           }).code(404);
         }
         
-        // Hapus artikel
         await prisma.article.delete({
           where: { id: id }
         });

@@ -10,6 +10,7 @@ import { Navbar } from '@/components/features/navigation/navbar';
 import { Footer } from '@/components/features/shared/footer';
 import { ScrollToTop } from '@/components/features/shared/scroll-to-top';
 import { useLoadingState } from '@/hooks/use-loading-state';
+import { useLanguage } from '@/models/language-context';
 
 export default function ArticleDetailPage() {
   const params = useParams();
@@ -18,6 +19,7 @@ export default function ArticleDetailPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { withLoading } = useLoadingState();
+  const { t } = useLanguage();
 
   const formatContent = (content) => {
     if (!content) return '';
@@ -100,23 +102,22 @@ export default function ArticleDetailPage() {
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
-
   const handleShare = async () => {
+    if (!article) return;
+    
     if (navigator.share) {
       try {
         await navigator.share({
-          title: article.title,
-          text: article.excerpt,
+          title: article.title || 'EcoWaste Article',
+          text: article.excerpt || 'Check out this article from EcoWaste',
           url: window.location.href,
         });
       } catch (err) {
         console.log('Error sharing:', err);
       }
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      alert('Link artikel telah disalin!');
-    }  };  if (loading && !article) {
+    } else {      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href);      alert(t('blog.share.copied'));
+    }};if (loading && !article) {
     return null; // The global loader will show instead
   }
 
@@ -127,14 +128,14 @@ export default function ArticleDetailPage() {
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center max-w-md mx-auto">
             <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-6" />
-            <h1 className="text-2xl font-serif font-bold text-gray-900 mb-3">Artikel Tidak Ditemukan</h1>
+            <h1 className="text-2xl font-serif font-bold text-gray-900 mb-3">{t('blog.notFound.title')}</h1>
             <p className="text-gray-600 mb-8">{error}</p>
             <Link 
               href="/blog"
               className="inline-flex items-center px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Kembali ke Blog
+              {t('blog.notFound.button')}
             </Link>
           </div>
         </div>
@@ -146,8 +147,7 @@ export default function ArticleDetailPage() {
 
   return (    <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      
-      <main className="flex-grow">
+        <main className="flex-grow">
         {/* Back Button */}
         <div className="bg-white border-b border-gray-100">
           <div className="container mx-auto max-w-5xl px-4 py-4">
@@ -156,56 +156,61 @@ export default function ArticleDetailPage() {
               className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Kembali ke Blog
+              {t('blog.backToBlog')}
             </Link>
           </div>
-        </div>        {/* Article Header */}
+        </div>{/* Article Header */}
         <article className="bg-white">
           <div className="container mx-auto px-4 py-8">
             <div className="max-w-3xl mx-auto">
               {/* Category */}
-              <div className="mb-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(article.category)}`}>
-                  {article.category}
-                </span>
-              </div>              {/* Title */}
+              {article && article.category && (
+                <div className="mb-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(article.category)}`}>
+                    {article.category}
+                  </span>
+                </div>
+              )}
+              
+              {/* Title */}
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight" style={{ fontFamily: 'Charter, Bitstream Charter, Sitka Text, Cambria, serif' }}>
-                {article.title}
+                {article ? article.title : ''}
               </h1>              {/* Meta Information */}
               <div className="flex flex-wrap items-center text-sm text-gray-500 mb-6 pb-4 border-b border-gray-100">
-                <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {formatDate(article.createdAt)}
-                </div>
-                <span className="mx-2">•</span>
-                {article.readTime && (
+                {article && article.createdAt && (
+                  <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    {formatDate(article.createdAt)}
+                  </div>
+                )}
+                {article && article.createdAt && <span className="mx-2">•</span>}                {article && article.readTime && (
                   <>
                     <div className="flex items-center">
                       <Clock className="w-4 h-4 mr-1" />
-                      {article.readTime} menit baca
+                      {article.readTime} {t('blog.readTime')}
                     </div>
                     <span className="mx-2">•</span>
                   </>
                 )}
-                <div className="flex items-center">
-                  <Eye className="w-4 h-4 mr-1" />
-                  {article.viewCount} views
-                </div>
-
-                {/* Share Button */}
+                {article && (
+                  <div className="flex items-center">
+                    <Eye className="w-4 h-4 mr-1" />
+                    {article.viewCount || 0} {t('blog.views')}
+                  </div>
+                )}                {/* Share Button */}
                 <button
                   onClick={handleShare}
                   className="ml-auto inline-flex items-center text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <Share2 className="w-4 h-4 mr-1" />
-                  <span className="text-sm">Bagikan</span>
+                  <span className="text-sm">{t('blog.share')}</span>
                 </button>
               </div>              {/* Cover Image */}
-              {article.coverImage && (
+              {article && article.coverImage && (
                 <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden mb-8">
                   <Image
                     src={article.coverImage}
-                    alt={article.title}
+                    alt={article.title || 'Article cover image'}
                     fill
                     className="object-cover"
                   />
@@ -216,11 +221,16 @@ export default function ArticleDetailPage() {
         </article>        {/* Article Content */}
         <div className="bg-white">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto"><div 
-                className="article-content"
-                dangerouslySetInnerHTML={{ __html: formatContent(article.content) }}
-              />{/* Tags */}
-              {article.tags && (
+            <div className="max-w-3xl mx-auto">
+              {article && article.content && (
+                <div 
+                  className="article-content"
+                  dangerouslySetInnerHTML={{ __html: formatContent(article.content) }}
+                />
+              )}
+              
+              {/* Tags */}
+              {article && article.tags && (
                 <div className="mt-12 pt-6 border-t border-gray-100">
                   <div className="flex flex-wrap gap-2">
                     {article.tags.split(',').map((tag) => (
@@ -243,9 +253,8 @@ export default function ArticleDetailPage() {
         {relatedArticles.length > 0 && (
           <section className="bg-gray-50 border-t border-gray-100 py-16">
             <div className="container mx-auto px-4">
-              <div className="max-w-5xl mx-auto">
-                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-8 text-center">
-                  Artikel Terkait
+              <div className="max-w-5xl mx-auto">                <h2 className="text-2xl font-serif font-bold text-gray-900 mb-8 text-center">
+                  {t('blog.relatedArticles')}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
                   {relatedArticles.map((article) => (
@@ -268,10 +277,9 @@ export default function ArticleDetailPage() {
                           {article.excerpt}
                         </p>
                       </div>
-                      <div className="flex items-center text-xs text-gray-500 mt-3">
-                        <span>{new Date(article.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      <div className="flex items-center text-xs text-gray-500 mt-3">                        <span>{new Date(article.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                         <span className="mx-2">•</span>
-                        <span>{article.readTime || 5} menit baca</span>
+                        <span>{article.readTime || 5} {t('blog.readTime')}</span>
                       </div>
                     </Link>
                   ))}
@@ -279,29 +287,27 @@ export default function ArticleDetailPage() {
               </div>
             </div>
           </section>
-        )}
-
-        {/* Newsletter Section */}
+        )}        {/* Newsletter Section */}
         <section className="bg-white border-t border-gray-100 py-16">
           <div className="container mx-auto max-w-xl px-4 text-center">
             <h2 className="text-2xl font-serif font-bold text-gray-900 mb-4">
-              Dapatkan artikel terbaru langsung ke inbox Anda
+              {t('blog.newsletter.title')}
             </h2>
             <p className="text-gray-600 mb-6">
-              Berlangganan newsletter kami untuk mendapatkan inspirasi dan panduan tentang pengelolaan sampah dan gaya hidup berkelanjutan.
+              {t('blog.newsletter.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="email"
-                placeholder="Alamat email Anda"
+                placeholder={t('blog.newsletter.placeholder')}
                 className="flex-grow px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-500 focus:ring-0 outline-none"
               />
               <button className="px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
-                Berlangganan
+                {t('blog.newsletter.subscribe')}
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-3">
-              Kami menghormati privasi Anda. Anda dapat berhenti berlangganan kapan saja.
+              {t('blog.newsletter.privacy')}
             </p>
           </div>
         </section>

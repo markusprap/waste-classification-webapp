@@ -6,15 +6,14 @@ const slugify = (text) => {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')     // Replace spaces with -
-    .replace(/[^\w\-]+/g, '') // Remove non-word chars except -
-    .replace(/\-\-+/g, '-')   // Replace multiple - with single -
-    .replace(/^-+/, '')       // Trim - from start
-    .replace(/-+$/, '');      // Trim - from end
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 };
 
 const routes = [
-  // GET /api/articles 
   {
     method: 'GET',
     path: '/api/articles',
@@ -23,7 +22,6 @@ const routes = [
         const { page = 1, limit = 12, category, search } = request.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        // Build where clause
         const where = {
           isPublished: true,
           ...(category && { category }),
@@ -35,7 +33,6 @@ const routes = [
             ]
           })
         };
-          // Get articles with pagination
         const [articles, total] = await Promise.all([
           request.server.app.prisma.article.findMany({
             where,
@@ -47,7 +44,7 @@ const routes = [
               coverImage: true,
               category: true,
               tags: true,
-              author: true, 
+              author: true,
               readTime: true,
               viewCount: true,
               createdAt: true
@@ -64,7 +61,7 @@ const routes = [
         return {
           articles,
           pagination: {
-            current: parseInt(page), 
+            current: parseInt(page),
             pages: totalPages,
             total,
             hasNext: parseInt(page) < totalPages,
@@ -78,7 +75,6 @@ const routes = [
       }
     }
   },
-  // GET /api/articles/{id} 
   {
     method: 'GET',
     path: '/api/articles/{id}',
@@ -88,7 +84,6 @@ const routes = [
         const article = await request.server.app.prisma.article.findUnique({
           where: { id },
           include: {
-            // Add any related data to include
           }
         });
 
@@ -104,8 +99,6 @@ const routes = [
       }
     }
   },
-
-  // GET /api/articles/slug/{slug}
   {
     method: 'GET',
     path: '/api/articles/slug/{slug}',
@@ -121,7 +114,6 @@ const routes = [
           return h.response({ error: 'Article not found' }).code(404);
         }
 
-        // Increment view count
         await request.server.app.prisma.article.update({
           where: { id: article.id },
           data: { viewCount: { increment: 1 } }
@@ -132,7 +124,6 @@ const routes = [
       }
     }
   },
-  // POST /api/v1/articles
   {
     method: 'POST',
     path: '/api/v1/articles',
@@ -141,9 +132,9 @@ const routes = [
         output: 'stream',
         parse: true,
         multipart: true,
-        maxBytes: 10 * 1024 * 1024, // 10MB
-        timeout: false, // Disable timeout for large file uploads
-        uploads: os.tmpdir() // Use OS temp directory for file uploads
+        maxBytes: 10 * 1024 * 1024,
+        timeout: false,
+        uploads: os.tmpdir()
       }    },
     handler: async (request, h) => {
       try {
@@ -157,7 +148,6 @@ const routes = [
           }).code(400);
         }
 
-        // Generate unique slug
         const slug = slugify(title);
         const existingArticleCount = await request.server.app.prisma.article.count({
           where: {
@@ -168,7 +158,6 @@ const routes = [
         });
         const finalSlug = existingArticleCount > 0 ? `${slug}-${existingArticleCount + 1}` : slug;
 
-        // Handle file upload if provided
         let imageData = null;
         if (file) {
           try {
@@ -182,7 +171,6 @@ const routes = [
           }
         }
 
-        // Create article with all fields
         const articleData = {
           title,
           slug: finalSlug,
@@ -226,7 +214,7 @@ const routes = [
         }).code(500);
       }
     }
-  },  // PUT /api/v1/articles/{id}
+  },
   {
     method: 'PUT',
     path: '/api/v1/articles/{id}',
@@ -235,7 +223,7 @@ const routes = [
         output: 'stream',
         parse: true,
         multipart: true,
-        maxBytes: 10 * 1024 * 1024 // 10MB
+        maxBytes: 10 * 1024 * 1024
       }
     },
     handler: async (request, h) => {
@@ -244,7 +232,6 @@ const routes = [
         const { title, content, excerpt, category, tags, author } = request.payload;
         const coverImage = request.payload.file;
 
-        // Get existing article
         const existingArticle = await request.server.app.prisma.article.findUnique({
           where: { id },
           select: { coverImage: true }
@@ -254,18 +241,14 @@ const routes = [
           return h.response({ error: 'Article not found' }).code(404);
         }
 
-        // Handle cover image
         let imageData = null;
         if (coverImage) {
-          // Delete old image if exists
           if (existingArticle.coverImage) {
             await deleteArticleImage(existingArticle.coverImage);
           }
-          // Store new image
           imageData = await storeArticleImage(coverImage);
         }
 
-        // Update article
         const article = await request.server.app.prisma.article.update({
           where: { id },
           data: {
@@ -294,7 +277,7 @@ const routes = [
         return h.response({ error: 'Failed to update article' }).code(500);
       }
     }
-  },  // DELETE /api/v1/articles/{id}
+  },
   {
     method: 'DELETE',
     path: '/api/v1/articles/{id}',
@@ -302,7 +285,6 @@ const routes = [
       try {
         const { id } = request.params;
 
-        // Get article to delete its image
         const article = await request.server.app.prisma.article.findUnique({
           where: { id },
           select: { coverImage: true }
@@ -312,12 +294,10 @@ const routes = [
           return h.response({ error: 'Article not found' }).code(404);
         }
 
-        // Delete cover image if exists
         if (article.coverImage) {
           await deleteArticleImage(article.coverImage);
         }
 
-        // Delete article
         await request.server.app.prisma.article.delete({
           where: { id }
         });
@@ -330,14 +310,11 @@ const routes = [
       }
     }
   },
-
-  // GET /api/articles/categories
   {
     method: 'GET',
     path: '/api/articles/categories',
     handler: async (request, h) => {
       try {
-        // Get all distinct categories and their counts
         const categories = await request.server.app.prisma.article.groupBy({
           by: ['category'],
           where: {
@@ -348,7 +325,6 @@ const routes = [
           }
         });
 
-        // Format the response
         const formattedCategories = categories.map(item => ({
           name: item.category,
           count: item._count.category

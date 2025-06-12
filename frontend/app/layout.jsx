@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import { Providers } from "../src/components/providers"
 import { ThemeProvider } from "../src/components/theme-provider"
 import { NavigationLoader } from "../src/components/navigation-loader"
+import { GlobalLoadingOverlay } from "../src/components/global-loading-overlay"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -15,6 +16,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/images/logos/recycle-logo-white.png" type="image/png" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#059669" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -24,6 +30,7 @@ export default function RootLayout({ children }) {
         >
           <Providers>
             <NavigationLoader />
+            <GlobalLoadingOverlay />
             {children}
           </Providers>
         </ThemeProvider>

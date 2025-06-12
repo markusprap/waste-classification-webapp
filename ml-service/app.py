@@ -4,7 +4,6 @@ from src.api.routes import api_bp
 from src.config.settings import config
 import logging
 
-# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -12,17 +11,11 @@ logging.basicConfig(
 
 def create_app():
     app = Flask(__name__)
+    CORS(app, origins=config.CORS_ORIGINS)
     
-    # Enable CORS
-    CORS(app)
-    
-    # App config
     app.config['MAX_CONTENT_LENGTH'] = config.MAX_CONTENT_LENGTH
+    app.register_blueprint(api_bp, url_prefix='')
     
-    # Register blueprints
-    app.register_blueprint(api_bp, url_prefix='/api')
-    
-    # Health check route
     @app.route('/health')
     def health():
         return {
@@ -35,8 +28,4 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(
-        host=config.HOST,
-        port=config.PORT,
-        debug=config.DEBUG
-    )
+    app.run(host=config.HOST, port=config.PORT, debug=config.DEBUG)

@@ -63,6 +63,12 @@ const checkUser = async (request, h) => {
  */
 const syncUser = async (request, h) => {
   try {
+    console.log('Sync user request payload:', request.payload ? {
+      email: request.payload.email,
+      id: request.payload.id,
+      name: request.payload.name
+    } : 'No payload');
+    
     const { id, email, name } = request.payload;
     
     if (!email) {
@@ -74,14 +80,26 @@ const syncUser = async (request, h) => {
 
     // Try to find existing user
     let user = await prisma.user.findFirst({
-      where: { email: email }
+      where: { 
+        OR: [
+          { email: email },
+          { id: id }
+        ]
+      }
     });
 
-    if (user) {      // Update existing user
+    if (user) {
+      // Update existing user with all relevant fields
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
-          name: name
+          email: email, // Ensure email is always up to date
+          name: name,
+          // Keep existing plan and usage data
+          plan: user.plan || 'free',
+          usageLimit: user.usageLimit || 30,
+          usageCount: user.usageCount || 0,
+          lastUsageReset: user.lastUsageReset || new Date()
         }
       });
     } else {
@@ -92,8 +110,9 @@ const syncUser = async (request, h) => {
           email: email,
           name: name,
           plan: 'free',
-          usageLimit: 30, // Free plan limit is 30
-          usageCount: 0
+          usageLimit: 30,
+          usageCount: 0,
+          lastUsageReset: new Date()
         }
       });
     }
@@ -104,7 +123,11 @@ const syncUser = async (request, h) => {
       data: {
         id: user.id,
         email: user.email,
-        plan: user.plan
+        name: user.name,
+        plan: user.plan,
+        usageLimit: user.usageLimit,
+        usageCount: user.usageCount,
+        lastUsageReset: user.lastUsageReset
       }
     }).code(200);
 
@@ -268,9 +291,58 @@ const getUserById = async (request, h) => {
   }
 };
 
+/**
+ * Get user profile
+ */
+const getUserProfile = async (request, h) => {
+  try {
+    const { id } = request.payload;
+    
+    if (!id) {
+      return h.response({
+        status: 'error',
+        message: 'User ID is required'
+      }).code(400);
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: id }
+    });
+
+    if (!user) {
+      return h.response({
+        status: 'error',
+        message: 'User not found'
+      }).code(404);
+    }
+
+    return h.response({
+      status: 'success',
+      data: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        plan: user.plan,
+        usageLimit: user.usageLimit,
+        usageCount: user.usageCount,
+        lastUsageReset: user.lastUsageReset
+      }
+    }).code(200);
+
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return h.response({
+      status: 'error',
+      message: 'Failed to fetch user profile',
+      error: error.message
+    }).code(500);
+  }
+};
+
 module.exports = {
   checkUser,
   syncUser,
   getUserInfo,
-  getUserById
+  getUserById,
+  getUserProfile
 };

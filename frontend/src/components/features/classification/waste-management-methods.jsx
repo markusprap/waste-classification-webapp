@@ -45,6 +45,51 @@ const methods = [
 export function WasteManagementMethods({ classificationData }) {
   const { t, language } = useLanguage()
 
+  const getMethodFromCategory = (category) => {
+    const methodMap = {
+      'cardboard': 'recycle',
+      'glass': 'recycle',
+      'metal': 'recycle',
+      'paper': 'recycle',
+      'plastic': 'recycle',
+      'trash': 'reduce',
+      'battery': 'reduce',
+      'biological': 'compost',
+      'clothes': 'reuse',
+      'shoes': 'reuse',
+      'white-glass': 'recycle',
+      'other': 'reduce'
+    };
+    
+    return methodMap[category] || 'reduce';
+  }
+
+  function formatLabel(label) {
+    if (!label) return '';
+    return label.replace(/_/g, ' ');
+  }
+
+  function getMethodLabel(method, language) {
+    if (!method) return '';
+    if (language === 'id') {
+      if (method === 'recycle') return 'Daur Ulang';
+      if (method === 'compost') return 'Kompos';
+      if (method === 'reduce') return 'Kurangi';
+      if (method === 'reuse') return 'Gunakan Kembali';
+      if (method === 'special') return 'Pembuangan Khusus';
+      if (method === 'check') return 'Periksa Manual';
+      return method;
+    } else {
+      if (method === 'recycle') return 'Recycle';
+      if (method === 'compost') return 'Compost';
+      if (method === 'reduce') return 'Reduce';
+      if (method === 'reuse') return 'Reuse';
+      if (method === 'special') return 'Special Disposal';
+      if (method === 'check') return 'Check Manual';
+      return method.charAt(0).toUpperCase() + method.slice(1);
+    }
+  }
+
   return (
     <section className="bg-gradient-to-br from-gray-50 to-gray-100 py-16 md:py-20" data-section="waste-methods">
       <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
@@ -62,17 +107,24 @@ export function WasteManagementMethods({ classificationData }) {
             <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-lg p-4 max-w-xl mx-auto">
               <p className="text-teal-800 font-medium">
                 {language === "id"
-                  ? `💡 Rekomendasi untuk ${classificationData.typeId || classificationData.type}: ${classificationData.method === "recycle" ? "Daur Ulang" : classificationData.method === "compost" ? "Kompos" : classificationData.method === "reduce" ? "Kurangi" : "Gunakan Kembali"}`
-                  : `💡 AI Recommendation for ${classificationData.type}: ${classificationData.method.charAt(0).toUpperCase() + classificationData.method.slice(1)}`}
+                  ? `💡 Rekomendasi untuk ${formatLabel(classificationData.typeId || classificationData.category || 'sampah ini')}: ${classificationData.method 
+                      ? methods.find(m => m.id === classificationData.method)?.titleId || "-"
+                      : methods.find(m => m.id === getMethodFromCategory(classificationData.category))?.titleId || "-"}
+                  `
+                  : `💡 AI Recommendation for ${formatLabel(classificationData.type || classificationData.category || 'this waste')}: ${classificationData.method 
+                      ? methods.find(m => m.id === classificationData.method)?.title || "-"
+                      : methods.find(m => m.id === getMethodFromCategory(classificationData.category))?.title || "-"}
+                  `}
               </p>
             </div>
           )}
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {methods.map((method) => {
             const Icon = method.icon
-            const isRecommended = classificationData?.method === method.id
+            const isRecommended = classificationData && 
+              (classificationData.method === method.id || 
+               (!classificationData.method && getMethodFromCategory(classificationData.category) === method.id))
 
             return (
               <div
@@ -83,7 +135,6 @@ export function WasteManagementMethods({ classificationData }) {
                     : "bg-white border border-gray-200 hover:shadow-lg hover:scale-102 hover:border-gray-300"
                 }`}
               >
-                {/* Recommended badge */}
                 {isRecommended && (
                   <div className="absolute top-0 right-0 bg-gradient-to-r from-teal-500 to-emerald-500 text-white px-3 py-1 rounded-bl-lg text-xs font-bold">
                     {t("classify.methods.recommended")}

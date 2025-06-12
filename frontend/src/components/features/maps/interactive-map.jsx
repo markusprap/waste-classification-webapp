@@ -61,74 +61,57 @@ export function InteractiveMap({ userLocation, onLocationUpdate }) {
       try {
         setLoading(true)
         setError(null)
-          console.log('🔍 Fetching waste banks from API...')
         
-        // Create params object with user location if available
         const params = {}
         if (userLocation) {
           params.lat = userLocation.lat
           params.lng = userLocation.lng
-          params.radius = 50 // Default radius 50km
-          params.limit = 100 // Default limit 100 results
-          console.log('📍 Using location params:', params)
+          params.radius = 50
+          params.limit = 100
         }
         
         const wastebanks = await fetchWasteBanks(params)
-        console.log('📦 Raw waste banks data:', wastebanks)
-        console.log('📊 Total waste banks fetched:', wastebanks.length)
         
         let mapped = wastebanks
           .filter((d) => d.latitude && d.longitude)
           .map((d, idx) => ({
-            id: idx + 1,
-            name: d.nama,
-            nameId: d.nama,
-            lat: d.latitude,
-            lng: d.longitude,
-            address: d.alamat,
-            type: "Bank Sampah",
-              city: extractCity(d.alamat)
-            }))
-          
-          console.log('🗺️ Mapped waste banks:', mapped)
-        console.log('📏 Filtered waste banks count:', mapped.length)
+        id: idx + 1,
+        name: d.nama,
+        nameId: d.nama,
+        lat: d.latitude,
+        lng: d.longitude,
+        address: d.alamat,
+        type: "Bank Sampah",
+          city: extractCity(d.alamat)
+        }))
         
         if (userLocation) {
-          // Check if backend already provided distance calculations
           const hasDistanceInfo = mapped.length > 0 && mapped[0].distance !== undefined
           
           if (!hasDistanceInfo) {
-            // Calculate distances client-side if not provided by backend
-            console.log('📏 Calculating distances client-side...')
-            mapped = mapped.map((loc) => ({
-              ...loc,
-              distance: calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng),
-              distanceText: (() => {
-                const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng)
-                return dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`
-              })()
-            }))
-          } else {
-            console.log('📏 Using backend-calculated distances')
+        mapped = mapped.map((loc) => ({
+          ...loc,
+          distance: calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng),
+          distanceText: (() => {
+            const dist = calculateDistance(userLocation.lat, userLocation.lng, loc.lat, loc.lng)
+            return dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`
+          })()
+        }))
           }
 
-          // For recommendations and map (consistent 50km radius)
           const filtered = mapped
-            .filter((loc) => loc.distance <= 50)
-            .sort((a, b) => a.distance - b.distance)
+        .filter((loc) => loc.distance <= 50)
+        .sort((a, b) => a.distance - b.distance)
           
-          // Untuk rekomendasi (ambil 15 terdekat)
           const recommended = filtered.slice(0, 15)
           setRecommendedWasteBanks(recommended)
           
           if (recommended.length > 0) {
-            setUserCity(recommended[0].city)
+        setUserCity(recommended[0].city)
           }
 
-          // Untuk ditampilkan di map (semua dalam radius 50km)
           setWasteLocations(filtered)
         } else {
-          // Jika tidak ada user location, tampilkan sample waste banks
           const sampleWasteBanks = mapped.slice(0, 20)
           setWasteLocations(sampleWasteBanks)
           setRecommendedWasteBanks(sampleWasteBanks.slice(0, 15))

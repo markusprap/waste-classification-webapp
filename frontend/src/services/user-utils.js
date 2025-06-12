@@ -1,10 +1,8 @@
 import { prisma } from '@/lib/prisma';
 
-// Check if user can classify based on their plan and usage
 export async function canUserClassify(user) {
   if (!user) return { allowed: false, reason: 'User not found' };
 
-  // Reset daily usage if needed
   const now = new Date();
   const lastReset = new Date(user.lastUsageReset || new Date());
   const shouldReset = now.getDate() !== lastReset.getDate() || 
@@ -21,9 +19,9 @@ export async function canUserClassify(user) {
     });
     return { allowed: true, reason: 'Daily usage reset' };
   }
-  // Check usage limits
-  const limit = user.plan === 'free' ? 100 : 
-                user.plan === 'premium' ? 50 : 
+  
+  const limit = user.plan === 'free' ? 30 : 
+                user.plan === 'premium' ? 10000 : 
                 Infinity;
   
   if (user.usageCount < limit) {
@@ -38,7 +36,6 @@ export async function canUserClassify(user) {
   }
 }
 
-// Update user usage count after successful classification
 export async function updateUserUsage(userId) {
   return await prisma.user.update({
     where: { id: userId },

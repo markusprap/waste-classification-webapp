@@ -111,14 +111,12 @@ export function MapSection({ initialUserLocation, onLocationUpdate }) {
       <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16 relative z-10">
         <h2 className="mb-16 text-center text-3xl font-bold">{t("map.title")}</h2>
 
-        <InteractiveMap userLocation={userLocation} onLocationUpdate={setUserLocation} />
-
-        <div className="mt-8 flex justify-center">
+        <InteractiveMap userLocation={userLocation} onLocationUpdate={setUserLocation} />        <div className="mt-8 flex justify-center">
           {!userLocation ? (
             <Button
               onClick={getCurrentLocation}
               disabled={isGettingLocation}
-              className="bg-black text-white hover:bg-gray-800 flex items-center gap-2 disabled:opacity-50"
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 disabled:opacity-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               <MapPin className="h-4 w-4" />
               {isGettingLocation
@@ -184,10 +182,9 @@ export function MapSection({ initialUserLocation, onLocationUpdate }) {
               </div>
             )}
 
-            <AlertDialogFooter>
-              <AlertDialogAction 
+            <AlertDialogFooter>              <AlertDialogAction
                 onClick={() => setShowSuccessDialog(false)}
-                className="w-full bg-black hover:bg-gray-800"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all duration-300 transform hover:scale-105 shadow-lg"
               >
                 {t("map.dialog.success.button")}
               </AlertDialogAction>
@@ -212,10 +209,9 @@ export function MapSection({ initialUserLocation, onLocationUpdate }) {
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            <AlertDialogFooter>
-              <AlertDialogAction 
+            <AlertDialogFooter>              <AlertDialogAction 
                 onClick={() => setShowErrorDialog(false)}
-                className="w-full bg-black hover:bg-gray-800"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all duration-300 transform hover:scale-105 shadow-lg"
               >
                 {t("map.dialog.error.button")}
               </AlertDialogAction>

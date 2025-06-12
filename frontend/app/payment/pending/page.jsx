@@ -11,7 +11,6 @@ export default function PaymentPending() {
   const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
-    // Redirect to homepage after 10 seconds
     const timer = setInterval(() => {
       setCountdown((prevCount) => {
         if (prevCount <= 1) {

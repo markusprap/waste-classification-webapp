@@ -1,8 +1,3 @@
-/**
- * Health check API routes for Hapi.js
- */
-
-// Health check handler
 const healthCheck = async (request, h) => {
   try {
     return h.response({ 
@@ -23,7 +18,6 @@ const healthCheck = async (request, h) => {
   }
 };
 
-// Define routes for Hapi.js
 const healthRoutes = [
   {
     method: 'GET',

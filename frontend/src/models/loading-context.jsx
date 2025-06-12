@@ -1,45 +1,52 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, Suspense } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
-// Create the context
 const LoadingContext = createContext({
   isLoading: false,
   setIsLoading: () => {},
 })
 
-// Custom hook to use the loading context
 export const useLoading = () => useContext(LoadingContext)
 
-export function LoadingProvider({ children }) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
+function LoadingProviderContent({ children, setIsLoading, isInitialLoad, setIsInitialLoad }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-
-  // Effect to handle route changes
+  
   useEffect(() => {
-    // Initial load state
     if (isInitialLoad) {
       setIsInitialLoad(false)
       return
     }
 
-    // Start loading when route changes
     setIsLoading(true)
-
-    // Simulate a minimum loading time
-    const timer = setTimeout(() => {
+    
+    const timeout = setTimeout(() => {
       setIsLoading(false)
-    }, 800) // Minimum loading time of 800ms
+    }, 500)
+    
+    return () => clearTimeout(timeout)
+  }, [pathname, searchParams, setIsLoading, isInitialLoad, setIsInitialLoad])
+  
+  return children
+}
 
-    return () => clearTimeout(timer)
-  }, [pathname, searchParams, isInitialLoad])
+export function LoadingProvider({ children }) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   return (
     <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
-      {children}
+      <Suspense fallback={<div>Loading...</div>}>
+        <LoadingProviderContent 
+          setIsLoading={setIsLoading} 
+          isInitialLoad={isInitialLoad} 
+          setIsInitialLoad={setIsInitialLoad}
+        >
+          {children}
+        </LoadingProviderContent>
+      </Suspense>
     </LoadingContext.Provider>
   )
 }

@@ -30,19 +30,17 @@ export function ClassificationResult({
         <p className="text-sm text-gray-600 mb-6">
           {language === "id" ? classificationResult.descriptionId : classificationResult.description}
         </p>
-        <div className="space-y-3">
-          <button
+        <div className="space-y-3">          <button
             onClick={onNavigateToClassify}
-            className="w-full bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium flex items-center justify-center space-x-2"
+            className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-6 py-3 rounded-lg transition-all duration-300 font-medium flex items-center justify-center space-x-2 transform hover:scale-105 shadow-lg"
           >
             <span>{language === "id" ? "Lihat Detail & Rekomendasi" : "View Details & Recommendations"}</span>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </button>
-          <button
+          </button>          <button
             onClick={onClassifyAgain}
-            className="w-full bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+            className="w-full bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-all duration-300"
           >
             {language === "id" ? "Klasifikasi Lagi" : "Classify Again"}
           </button>

@@ -1,10 +1,8 @@
-// Endpoint untuk menambahkan artikel baru
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// POST /api/admin/articles
 router.post('/articles', async (req, res) => {
   try {
     const {
@@ -20,12 +18,10 @@ router.post('/articles', async (req, res) => {
       isPublished = true
     } = req.body;
 
-    // Validasi data
     if (!title || !slug || !content || !category) {
       return res.status(400).json({ error: 'Title, slug, content, and category are required' });
     }
 
-    // Cek jika slug sudah ada
     const existingArticle = await prisma.article.findUnique({
       where: { slug }
     });
@@ -34,7 +30,6 @@ router.post('/articles', async (req, res) => {
       return res.status(409).json({ error: 'An article with this slug already exists' });
     }
 
-    // Buat artikel baru
     const article = await prisma.article.create({
       data: {
         title,

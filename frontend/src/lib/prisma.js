@@ -1,10 +1,3 @@
-/**
- * This is a mock implementation of the prisma client for frontend-only use.
- * The actual database operations should be moved to the backend.
- * This file provides a compatibility layer so existing code doesn't break.
- */
-
-// Mock Prisma client
 export const prisma = {
   user: {
     findUnique: async () => {

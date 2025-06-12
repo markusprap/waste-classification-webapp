@@ -4,9 +4,8 @@ import { useLoading } from "@/models/loading-context"
 import { useCallback } from "react"
 
 export function useLoadingState() {
-  const { setIsLoading } = useLoading()
+  const { isLoading, setIsLoading } = useLoading()
 
-  // Wrap the async function with loading state
   const withLoading = useCallback(async (asyncFunction) => {
     try {
       setIsLoading(true)
@@ -17,6 +16,7 @@ export function useLoadingState() {
   }, [setIsLoading])
 
   return {
+    isLoading,
     startLoading: () => setIsLoading(true),
     stopLoading: () => setIsLoading(false),
     withLoading
