@@ -2,8 +2,7 @@
   "services": [
     {
       "name": "backend",
-      "root": "backend",
-      "dockerfilePath": "Dockerfile"
+      "root": "backend"
     }
   ]
 }
