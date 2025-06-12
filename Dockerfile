@@ -3,6 +3,7 @@ WORKDIR /app
 COPY backend/package*.json ./
 RUN npm install
 COPY backend/ ./
+COPY backend/database/prisma/dev.db ./prisma/dev.db
 COPY backend/database/prisma/schema.prisma ./prisma/schema.prisma
 RUN npx prisma generate
 RUN mkdir -p public/uploads/articles
