@@ -18,8 +18,6 @@ RUN mkdir -p public/uploads/articles
 ENV PORT=3001
 ENV NODE_ENV=production
 
-# Expose port
 EXPOSE 3001
 
-# Start the server
 CMD ["node", "server.js"]
