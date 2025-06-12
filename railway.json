@@ -3,8 +3,7 @@
     {
       "name": "backend",
       "root": "backend",
-      "installCommand": "npm install",
-      "startCommand": "node server.js"
+      "dockerfilePath": "Dockerfile"
     }
   ]
 }
