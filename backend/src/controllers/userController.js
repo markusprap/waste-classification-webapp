@@ -78,15 +78,24 @@ const syncUser = async (request, h) => {
       }).code(400);
     }
 
-    // Try to find existing user
+    // Try to find existing user FIRST by email (prioritize email matching)
     let user = await prisma.user.findFirst({
-      where: { 
-        OR: [
-          { email: email },
-          { id: id }
-        ]
-      }
+      where: { email: email }
     });
+
+    // If found by email but ID is different (login with different provider but same email)
+    if (user && user.id !== id) {
+      console.log(`Found user with same email but different ID. Original ID: ${user.id}, New ID: ${id}`);
+      // Keep existing user, but track the new ID as an alternate ID if needed
+      // You could store this in a separate table if needed
+    }
+    
+    // If not found by email, try to find by ID
+    if (!user) {
+      user = await prisma.user.findUnique({
+        where: { id: id }
+      });
+    }
 
     if (user) {
       // Update existing user with all relevant fields
@@ -339,10 +348,134 @@ const getUserProfile = async (request, h) => {
   }
 };
 
+/**
+ * Update user usage count when classifying waste
+ * @param {Object} request - Hapi request object
+ * @param {Object} h - Hapi response toolkit
+ * @returns {Object} Updated user data
+ */
+const updateUsage = async (request, h) => {
+  try {
+    console.log('Updating usage count request:', request.payload);
+    
+    const { id } = request.payload;
+    
+    if (!id) {
+      return h.response({
+        status: 'error',
+        message: 'User ID is required'
+      }).code(400);
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: id }
+    });
+
+    if (!user) {
+      return h.response({
+        status: 'error',
+        message: 'User not found'
+      }).code(404);
+    }
+
+    // Update user usage count
+    const updatedUser = await prisma.user.update({
+      where: { id: id },
+      data: {
+        usageCount: {
+          increment: 1
+        }
+      }
+    });
+
+    console.log(`Updated usage count for user ${id}: ${updatedUser.usageCount}`);
+
+    return h.response({
+      status: 'success',
+      message: 'Usage count updated successfully',
+      data: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        plan: updatedUser.plan,
+        usageLimit: updatedUser.usageLimit,
+        usageCount: updatedUser.usageCount,
+        lastUsageReset: updatedUser.lastUsageReset
+      }
+    }).code(200);
+
+  } catch (error) {
+    console.error('Error updating usage count:', error);
+    return h.response({
+      status: 'error',
+      message: 'Failed to update usage count',
+      error: error.message
+    }).code(500);
+  }
+};
+
+/**
+ * Look up user by email
+ * @param {Object} request - Hapi request object
+ * @param {Object} h - Hapi response toolkit
+ * @returns {Object} User data
+ */
+const getUserByEmail = async (request, h) => {
+  try {
+    const { email } = request.payload;
+    
+    console.log('Looking up user by email:', email);
+    
+    if (!email) {
+      return h.response({
+        status: 'error',
+        message: 'Email is required'
+      }).code(400);
+    }
+
+    // Try to find user by email
+    const user = await prisma.user.findFirst({
+      where: { email: email }
+    });
+    
+    if (!user) {
+      console.log(`No user found with email: ${email}`);
+      return h.response({
+        status: 'error',
+        message: 'User not found'
+      }).code(404);
+    }
+
+    console.log(`Found user by email: ${email}, ID: ${user.id}`);
+    
+    return h.response({
+      status: 'success',
+      data: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        plan: user.plan,
+        usageLimit: user.usageLimit,
+        usageCount: user.usageCount,
+        lastUsageReset: user.lastUsageReset
+      }
+    }).code(200);
+
+  } catch (error) {
+    console.error('Error fetching user by email:', error);
+    return h.response({
+      status: 'error',
+      message: 'Failed to fetch user by email',
+      error: error.message
+    }).code(500);
+  }
+};
+
 module.exports = {
   checkUser,
   syncUser,
   getUserInfo,
   getUserById,
-  getUserProfile
+  getUserProfile,
+  updateUsage,
+  getUserByEmail
 };
