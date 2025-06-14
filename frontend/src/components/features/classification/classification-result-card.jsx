@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle, Lightbulb, Recycle, Leaf, Trash2, RotateCcw } from "lucide-react"
 import wasteInfo from "./waste-info.json"
 
-// Mapping baru sesuai class_names.json
 const CATEGORY_MAP = {
   Alat_Pembersih_Kimia: { id: 'Alat Pembersih Kimia', en: 'Chemical Cleaning Tools' },
   Alumunium: { id: 'Alumunium', en: 'Aluminum' },
@@ -230,7 +229,6 @@ const WASTE_METHOD_MAP = {
   Tekstil: 'reuse',
 };
 
-// Helper functions to map ML service responses to UI elements
 function getCategoryDisplay(category, language) {
   return CATEGORY_MAP[category] ? CATEGORY_MAP[category][language] : (language === 'id' ? 'Lainnya' : 'Other');
 }
@@ -247,19 +245,16 @@ function getWasteMethod(category) {
   return WASTE_METHOD_MAP[category] || 'reduce';
 }
 
-// Helper untuk ambil info dari waste-info.json
 function getWasteInfo(subCategory, field, language) {
   if (!subCategory || !wasteInfo[subCategory]) return '';
   return wasteInfo[subCategory][field]?.[language] || '';
 }
 
-// Tambahkan helper untuk mengubah underscore menjadi spasi
 function formatLabel(label) {
   if (!label) return '';
   return label.replace(/_/g, ' ');
 }
 
-// Tambahkan mapping main category
 const MAIN_CATEGORY_MAP = {
   Alat_Pembersih_Kimia: { id: 'Anorganik', en: 'Inorganic' },
   Alumunium: { id: 'Anorganik', en: 'Inorganic' },
@@ -281,7 +276,6 @@ const MAIN_CATEGORY_MAP = {
 export function ClassificationResultCard({ result, language, onClassifyAgain, isLoading }) {
   if (!result) return null
 
-  // Loading animation (modern spinner)
   if (isLoading) {
     return (
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 rounded-xl">
@@ -341,7 +335,6 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
   }
   return (
     <div className="relative space-y-6">
-      {/* Loading Spinner Overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 rounded-xl">
           <div className="w-16 h-16 mb-4 relative flex items-center justify-center">
@@ -354,7 +347,6 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
           </div>
         </div>
       )}
-      {/* Main Classification Result - match home page style */}
       <div className="p-6 bg-gray-100 border-t rounded-xl">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
@@ -366,7 +358,6 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
               : getCategoryDisplay(result.type || result.typeId, 'en')}
           </h3>
           <p className="text-gray-600 mb-2">
-            {/* Main category, not sub category */}
             {language === "id"
               ? (result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].id : formatLabel(result.category))
               : (result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].en : formatLabel(result.category))}
@@ -380,7 +371,7 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
               : `This item is classified as ${getCategoryDisplay(result.type || result.typeId, 'en')} (${result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].en : formatLabel(result.category)})`}
           </p>
         </div>
-      </div>      {/* Disposal Instructions */}
+      </div>
       <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
         <div className="flex items-center space-x-2 mb-3">
           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -394,7 +385,6 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
           {getWasteInfo(result.typeId || result.type, 'disposal', language)}
         </p>
       </div>
-      {/* Recommendation */}
       <div className="bg-green-50 rounded-lg border border-green-200 p-6">
         <div className="flex items-center space-x-2 mb-3">
           <Lightbulb className="h-5 w-5 text-green-600" />
@@ -405,7 +395,7 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
         <p className="text-green-800">
           {getWasteInfo(result.typeId || result.type, 'recommendation', language)}
         </p>
-      </div>      {/* Environmental Impact */}
+      </div>
       <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
         <div className="flex items-center space-x-2 mb-3">
           <Leaf className="h-5 w-5 text-yellow-600" />
@@ -417,8 +407,7 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
           {getWasteInfo(result.typeId || result.type, 'environmental_impact', language)}
         </p>
       </div>
-
-      {/* Action Buttons */}      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Button 
           onClick={onClassifyAgain} 
           className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
@@ -430,7 +419,6 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
           variant="outline" 
           className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-all duration-300 shadow-md"
           onClick={() => {
-            // Scroll to waste management methods section
             const methodsSection = document.querySelector('[data-section="waste-methods"]')
             if (methodsSection) {
               methodsSection.scrollIntoView({ behavior: 'smooth' })

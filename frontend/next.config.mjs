@@ -3,7 +3,6 @@
 const nextConfig = {
   async rewrites() {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
-    // Pastikan backendUrl diawali http(s):// agar rewrites valid di Vercel
     return [
       { source: '/api/waste-banks/:path*', destination: `${backendUrl}/api/waste-banks/:path*` },
       { source: '/api/payment/:path*', destination: `${backendUrl}/api/payment/:path*` },

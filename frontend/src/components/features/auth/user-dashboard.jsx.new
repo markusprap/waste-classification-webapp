@@ -1,0 +1,346 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { signOut } from 'next-auth/react';
+import { useAuth } from '@/models/auth-context';
+import { useLanguage } from '@/models/language-context';
+import { Button } from '@/components/ui/button';
+import { 
+  AlertDialog, 
+  AlertDialogContent, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
+import AnalyticsDashboard from './analytics-dashboard';
+
+export default function UserDashboard({ isOpen, onClose }) {
+  const { user, upgradeUser } = useAuth();
+  const { language } = useLanguage();
+  const [upgrading, setUpgrading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState('');
+  const [upgradeSuccess, setUpgradeSuccess] = useState('');
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const dialogRef = useRef(null);
+  
+  // Handle click outside to close the dialog 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // Only allow closing if we're not in the middle of payment
+      if (!upgrading && dialogRef.current && !dialogRef.current.contains(event.target)) {
+        onClose();
+      }
+    }
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose, upgrading]);
+
+  const handleLogout = async () => {
+    // First close the dashboard dialog
+    onClose();
+    
+    // Sign out from NextAuth with redirect to the current URL
+    try {
+      await signOut({ 
+        redirect: false
+      });
+      // After signOut completes, manually redirect to homepage
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/';
+    }
+  };  
+
+  const handleUpgrade = async (plan) => {
+    try {
+      // Early validation
+      if (!user || !user.email) {
+        setUpgradeError(language === 'id' ? 'Silakan masuk kembali' : 'Please login again');
+        return;
+      }
+
+      setUpgrading(true);
+      setUpgradeError('');
+      setUpgradeSuccess('');
+
+      console.log(`Initiating premium upgrade for plan: ${plan}`);
+      
+      if (!upgradeUser) {
+        throw new Error(language === 'id' ? 'Fungsi upgrade tidak tersedia' : 'Upgrade function is not available');
+      }
+      
+      try {
+        const result = await upgradeUser(plan);
+        console.log('Premium upgrade result:', result);
+        
+        if (result && result.success) {
+          console.log('Premium upgrade successful:', result);
+          
+          // Handle different payment states
+          if (result.status === 'pending') {
+            setUpgradeSuccess(
+              language === 'id' 
+                ? 'Menunggu pembayaran. Halaman ini akan diperbarui setelah pembayaran berhasil.'
+                : 'Waiting for payment. This page will update once payment is completed.'
+            );
+            // Keep dialog open for pending payments
+          } else {
+            setUpgradeSuccess(
+              language === 'id'
+                ? 'Pembayaran berhasil! Anda sekarang memiliki akses premium.'
+                : 'Payment successful! You now have premium access.'
+            );
+            // Close dashboard after successful direct payment
+            setTimeout(() => {
+              onClose();
+              window.location.reload(); // Ensure page reflects new status
+            }, 3000);
+          }
+        } else {
+          console.error('Premium upgrade failed:', result);
+          // Provide clear error messages
+          let errorMessage;
+          if (result && result.error) {
+            if (result.error === 'Payment cancelled' || result.error.includes('closed')) {
+              errorMessage = language === 'id' ? 'Pembayaran dibatalkan' : 'Payment was cancelled';
+            } else if (result.error.includes('verification')) {
+              errorMessage = language === 'id' 
+                ? 'Verifikasi akun gagal. Silakan keluar dan masuk kembali, lalu coba lagi.'
+                : 'Account verification failed. Please log out and log in again, then try again.';
+            } else if (result.error.includes('User not found') || result.error.includes('User verification failed')) {
+              errorMessage = language === 'id'
+                ? 'Verifikasi pengguna gagal. Silakan keluar dan masuk kembali.'
+                : 'User verification failed. Please log out and log in again.';
+            } else {
+              errorMessage = result.error;
+            }
+          } else {
+            errorMessage = language === 'id' 
+              ? 'Terjadi kesalahan saat memproses pembayaran'
+              : 'An error occurred while processing payment';
+          }
+          
+          setUpgradeError(errorMessage);
+        }
+      } catch (upgradeError) {
+        console.error('Error during upgrade process:', upgradeError);
+        let errorMessage = upgradeError?.message || 
+          (language === 'id' 
+            ? 'Terjadi kesalahan dalam proses pembayaran. Silakan coba lagi.'
+            : 'An error occurred during the payment process. Please try again.');
+        
+        setUpgradeError(errorMessage);
+      }
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      setUpgradeError(
+        error?.message || 
+        (language === 'id' 
+          ? 'Terjadi kesalahan. Mohon coba lagi nanti.'
+          : 'An error occurred. Please try again later.'
+        )
+      );
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  const getPlanBadgeColor = (plan) => {
+    switch (plan) {
+      case 'free': return 'bg-gray-100 text-gray-800';
+      case 'premium': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getMonthlyLimit = (plan) => {
+    switch (plan) {
+      case 'free': return 30;
+      case 'premium': return 'unlimited';
+      default: return 30;
+    }
+  };
+
+  if (!isOpen || !user) return null;
+
+  // Show analytics dashboard if requested
+  if (showAnalytics) {
+    return (
+      <AlertDialog open={showAnalytics} onOpenChange={setShowAnalytics}>
+        <AlertDialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              <Button
+                onClick={() => setShowAnalytics(false)}
+                variant="outline"
+                size="sm"
+                className="mb-4"
+              >
+                ← {language === 'id' ? 'Kembali' : 'Back'}
+              </Button>
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <AnalyticsDashboard />
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
+
+  return (
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
+      <AlertDialogContent className="sm:max-w-lg" ref={dialogRef}>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-xl font-bold text-center">
+            {language === 'id' ? 'Dashboard Pengguna' : 'User Dashboard'}
+          </AlertDialogTitle>
+        </AlertDialogHeader>
+
+        <div className="space-y-6">
+          {/* User Info */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-lg">{user.name}</h3>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeColor(user.plan)}`}>
+                {user.plan.toUpperCase()}
+              </span>
+            </div>
+            <p className="text-gray-600 text-sm">{user.email}</p>
+          </div>
+
+          {/* Usage Statistics */}
+          <div className="bg-green-50 rounded-lg p-4">
+            <h4 className="font-semibold mb-2">
+              {language === 'id' ? 'Penggunaan Bulan Ini' : 'This Month\'s Usage'}
+            </h4>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">
+                {language === 'id' ? 'Klasifikasi' : 'Classifications'}:
+              </span>
+              <span className="font-semibold">
+                {user.usageCount || 0} / {getMonthlyLimit(user.plan)}
+              </span>
+            </div>
+            
+            {user.plan === 'free' && (
+              <div className="mt-2">
+                <div className="bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-green-600 h-2 rounded-full" 
+                    style={{ width: `${Math.min((user.usageCount || 0) / 30 * 100, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {30 - (user.usageCount || 0)} {language === 'id' ? 'klasifikasi tersisa' : 'classifications remaining'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Premium Features */}
+          {user.plan !== 'free' && (
+            <div className="space-y-3">
+              <h4 className="font-semibold">
+                {language === 'id' ? 'Fitur Premium' : 'Premium Features'}
+              </h4>
+              
+              <div className="grid grid-cols-1 gap-2">
+                <Button
+                  onClick={() => setShowAnalytics(true)}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  {language === 'id' ? '📊 Analytics Dashboard' : '📊 Analytics Dashboard'}
+                </Button>
+                  <Button
+                  onClick={() => window.open('/api/export?format=csv', '_blank')}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  {language === 'id' ? '📄 Export Data' : '📄 Export Data'}
+                </Button>
+                
+                <Button
+                  onClick={() => window.open('/payment/dashboard', '_blank')}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  {language === 'id' ? '💳 Riwayat Pembayaran' : '💳 Payment History'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Upgrade Options */}
+          {user.plan === 'free' && (
+            <div className="space-y-3">
+              <h4 className="font-semibold">
+                {language === 'id' ? 'Upgrade Plan Anda' : 'Upgrade Your Plan'}
+              </h4>
+                <div className="grid grid-cols-1 gap-3">
+                <div className="border rounded-lg p-3 hover:bg-blue-50 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h5 className="font-medium">Premium Plan</h5>
+                      <p className="text-sm text-gray-600 mb-1">
+                        {language === 'id' ? 'Klasifikasi unlimited per bulan' : 'Unlimited classifications per month'}
+                      </p>
+                      <p className="text-xs font-medium text-green-600">
+                        Rp 99.000 {language === 'id' ? 'per bulan' : 'per month'}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => handleUpgrade('premium')}
+                      disabled={upgrading}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {upgrading ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          {language === 'id' ? 'Memproses...' : 'Processing...'}
+                        </span>
+                      ) : (
+                        language === 'id' ? 'Upgrade' : 'Upgrade'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {upgradeError && (
+            <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded">
+              {upgradeError}
+            </div>
+          )}
+
+          {upgradeSuccess && (
+            <div className="text-green-600 text-sm text-center bg-green-50 p-2 rounded">
+              {upgradeSuccess}
+            </div>
+          )}
+        </div>
+        
+        <div className="mt-6">
+          <Button
+            onClick={handleLogout}
+            variant="destructive"
+            className="w-full"
+          >
+            {language === 'id' ? 'Keluar' : 'Logout'}
+          </Button>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}

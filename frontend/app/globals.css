@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Add Charter font from CDN */
 @import url('https://fonts.cdnfonts.com/css/charter');
 
 @layer base {
@@ -61,7 +60,6 @@
   }
 }
 
-/* Custom styles for Leaflet map */
 .leaflet-container {
   height: 100%;
   width: 100%;
@@ -90,7 +88,6 @@
   background-color: rgba(255, 255, 255, 0.8);
 }
 
-/* Article Content Styles */
 .article-content {
   font-family: Charter, 'Bitstream Charter', 'Sitka Text', Cambria, serif;
   font-size: 1.25rem;
@@ -175,7 +172,6 @@
   font-family: 'SF Mono', 'Consolas', monospace;
 }
 
-/* Custom animations for login buttons */
 @keyframes bounce-slow {
   0%, 100% {
     transform: translateY(0);

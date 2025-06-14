@@ -43,7 +43,6 @@ export const authOptions = {
       try {
         const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
         
-        // Try to find existing user by email first
         const checkResponse = await fetch(`${backendUrl}/api/users/lookup`, {
           method: 'POST',
           headers: {
@@ -54,15 +53,12 @@ export const authOptions = {
           })
         });
 
-        // If user with this email exists, use that ID
         if (checkResponse.ok) {
           const existingUser = await checkResponse.json();
           console.log('Found existing user with same email:', existingUser.data.id);
-          // Continue with this ID
           user.id = existingUser.data.id;
         }
         
-        // Sync user with backend
         const response = await fetch(`${backendUrl}/api/users/sync`, {
           method: 'POST',
           headers: {
@@ -121,7 +117,6 @@ export const authOptions = {
     },    async jwt({ token, user, account }) {
       if (user) {
         token.sub = user.id;
-        // Store email in token for easier identification across providers
         token.email = user.email;
       }
       return token;

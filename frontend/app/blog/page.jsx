@@ -31,7 +31,6 @@ function BlogContent() {
     page: 1
   });
 
-  // Fetch articles
   const fetchArticles = useCallback(async () => {
     setLoading(true);
     try {
@@ -57,7 +56,6 @@ function BlogContent() {
       setLoading(false);
     }
   }, [filters]);
-  // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch(`/api/articles/categories`);
@@ -83,7 +81,7 @@ function BlogContent() {
     setFilters(prev => ({
       ...prev,
       ...newFilters,
-      page: 1 // Reset to first page when filter changes
+      page: 1
     }));
   }, []);
 
@@ -102,7 +100,6 @@ function BlogContent() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-        {/* Header Section - Minimal and Modern */}
       <header className="pt-24 pb-10 px-4 bg-white border-b border-gray-100">
         <div className="container mx-auto max-w-5xl">
           <h1 className="text-4xl font-serif font-bold mb-3 text-gray-900">
@@ -112,7 +109,7 @@ function BlogContent() {
             {t('blog.description')}
           </p>
         </div>
-      </header>      {/* Search and Filter Bar - Sticky */}
+      </header>
       <div className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm transition-all duration-200">
         <div className="container mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
           <div className="relative flex-grow max-w-2xl">
@@ -142,7 +139,7 @@ function BlogContent() {
             <span className="text-sm font-medium">{t('blog.filter')}</span>
           </button>
         </div>
-      </div>      {/* Filters Panel - Collapsible */}
+      </div>
       {showFilters && (
         <div className="sticky top-32 z-30 bg-gray-50 border-b border-gray-200 transition-all duration-200">
           <div className="container mx-auto max-w-5xl px-4 py-4">
@@ -185,12 +182,11 @@ function BlogContent() {
         </div>
       )}
 
-      {/* Main Content */}
       <main className="flex-grow container mx-auto max-w-5xl px-4 py-10">
-        {/* Results Summary */}
         {!loading && (
           <div className="mb-8">
-            <div className="flex items-center justify-between">              <h2 className="text-xl font-serif font-semibold text-gray-900">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-serif font-semibold text-gray-900">
                 {filters.search || filters.category ? (
                   <>
                     {filters.search && `${t('blog.searchResults')} "${filters.search}"`}
@@ -207,9 +203,9 @@ function BlogContent() {
           </div>
         )}
 
-        {/* Featured Article - First Article Highlight */}
         {!loading && articles.length > 0 && !filters.search && !filters.category && pagination.current === 1 && (
-          <div className="mb-12">            <Link href={`/blog/${articles[0].slug}`} className="group">              
+          <div className="mb-12">
+            <Link href={`/blog/${articles[0].slug}`} className="group">
               <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-4">
                 <Image 
                   src={articles[0].coverImage 
@@ -231,7 +227,8 @@ function BlogContent() {
                 </h3>
                 <p className="text-gray-600 line-clamp-2">
                   {articles[0].excerpt}
-                </p>                <div className="flex items-center text-sm text-gray-500 mt-2">
+                </p>
+                <div className="flex items-center text-sm text-gray-500 mt-2">
                   <span>{new Date(articles[0].createdAt).toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   <span className="mx-2">•</span>
                   <span>{articles[0].readTime || 5} {t('blog.readTime')}</span>
@@ -241,27 +238,28 @@ function BlogContent() {
           </div>
         )}
 
-        {/* Loading State */}        {loading && (
+        {loading && (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-8 h-8 animate-spin text-gray-400 mr-3" />
             <span className="text-gray-600 font-medium">{t('blog.loading')}</span>
           </div>
         )}
 
-        {/* Articles Grid - Modern and Clean */}
         {!loading && articles.length > 0 && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 mb-12">
               {(pagination.current === 1 && !filters.search && !filters.category 
-                ? articles.slice(1) // Skip first article if it's featured
+                ? articles.slice(1)
                 : articles
-              ).map((article) => (                <Link href={`/blog/${article.slug}`} key={article.id} className="group flex flex-col h-full">                  
+              ).map((article) => (
+                <Link href={`/blog/${article.slug}`} key={article.id} className="group flex flex-col h-full">
                   <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-4">
                     <Image 
                       src={article.coverImage 
                         ? (article.coverImage.startsWith('http') 
                           ? article.coverImage 
-                          : `/uploads/articles/${article.coverImage.replace(/^.*[\\\/]/, '')}`)                        : '/images/placeholders/placeholder.jpg'}
+                          : `/uploads/articles/${article.coverImage.replace(/^.*[\\\/]/, '')}`)
+                        : '/images/placeholders/placeholder.jpg'}
                       alt={article.title}
                       width={800}
                       height={600}
@@ -278,7 +276,8 @@ function BlogContent() {
                     <p className="text-sm text-gray-600 line-clamp-2">
                       {article.excerpt}
                     </p>
-                  </div>                  <div className="flex items-center text-xs text-gray-500 mt-3">
+                  </div>
+                  <div className="flex items-center text-xs text-gray-500 mt-3">
                     <span>{new Date(article.createdAt).toLocaleDateString(language === 'id' ? 'id-ID' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     <span className="mx-2">•</span>
                     <span>{article.readTime || 5} {t('blog.readTime')}</span>
@@ -287,9 +286,9 @@ function BlogContent() {
               ))}
             </div>
 
-            {/* Pagination - Minimalist */}
             <div className="flex justify-center mt-12 border-t border-gray-100 pt-10">
-              <div className="flex items-center space-x-1">                <button
+              <div className="flex items-center space-x-1">
+                <button
                   onClick={() => handlePageChange(pagination.current - 1)}
                   disabled={!pagination.hasPrev}
                   className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
@@ -329,8 +328,8 @@ function BlogContent() {
           </>
         )}
 
-        {/* Empty State - Clean and Helpful */}
-        {!loading && articles.length === 0 && (          <div className="text-center py-24 border border-gray-100 rounded-xl bg-gray-50">
+        {!loading && articles.length === 0 && (
+          <div className="text-center py-24 border border-gray-100 rounded-xl bg-gray-50">
             <div className="max-w-md mx-auto">
               <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-serif font-semibold text-gray-900 mb-2">
@@ -355,7 +354,7 @@ function BlogContent() {
         )}
       </main>
       
-      {/* Newsletter - Medium-style */}      <section className="bg-gray-50 border-t border-gray-100 py-16">
+      <section className="bg-gray-50 border-t border-gray-100 py-16">
         <div className="container mx-auto max-w-xl px-4 text-center">
           <h2 className="text-2xl font-serif font-bold text-gray-900 mb-4">
             {t('blog.newsletter.title')}

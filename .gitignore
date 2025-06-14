@@ -1,60 +1,74 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules
+/.pnp
+.pnp.js
 
-# dependencies
-/node_modules
-**/node_modules
+# Testing
+/coverage
 
-# next.js
+# Next.js
+.next/
 /.next/
 /out/
-**/.next/
-
-# production
 /build
+/.swc
+frontend/.next/
+backend/.next/
 
-# debug
+# Production
+/build
+dist
+
+# Misc
+.DS_Store
+*.pem
+.idea
+.vscode
+
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
-**/server-debug*.log
+*.log
 
-# env files
-.env*
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+.env.dev
 
-# vercel
+# Vercel
 .vercel
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-/lib/generated/prisma
+# Uploads
+/backend/public/uploads/**/*
+!/backend/public/uploads/**/README.md
+/frontend/public/uploads/**/*
+!/frontend/public/uploads/**/README.md
 
-# Backend files
-**/*.db
-**/*.sqlite
-**/*.sqlite3
+# Database files
+/backend/database/prisma/dev.db
+/backend/database/prisma/dev.db-journal
+/backend/database/prisma/migrations/*/
 
-# Cache directories
-**/.cache/
-**/cache/
+# ML model files
+/ml-service/models/*.h5
+/ml-service/models/*.keras
+/ml-service/models/*.pb
+/ml-service/models/*.bin
+/ml-service/__pycache__
+/ml-service/src/__pycache__
+/ml-service/src/*/__pycache__
 
-# Upload directories
-**/public/uploads/
-**/uploads/
+# Cache
+.cache
+__pycache__
 
-# Backup files
+# Temp files
+*.tmp
+*.temp
 *.bak
 *.backup
-*.new
-
-# IDE files
-.vscode/
-.idea/
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Deployment guide (exclude from git)
-DEPLOYMENT_GUIDE.md

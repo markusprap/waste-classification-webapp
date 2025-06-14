@@ -1,9 +1,5 @@
-/**
- * User API routes for Hapi.js
- */
 const { checkUser, syncUser, getUserInfo, getUserById, getUserProfile, updateUsage, getUserByEmail } = require('../controllers/userController');
 
-// Define routes for Hapi.js
 const userRoutes = [
   {
     method: 'POST',

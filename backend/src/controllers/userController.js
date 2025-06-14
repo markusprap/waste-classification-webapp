@@ -1,15 +1,6 @@
-/**
- * User controller for Hapi.js
- */
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-/**
- * Check if a user exists in the database
- * @param {Object} request - Hapi request object
- * @param {Object} h - Hapi response toolkit
- * @returns {Object} Response indicating whether user exists
- */
 const checkUser = async (request, h) => {
   try {
     const { email, userId } = request.payload;
@@ -21,7 +12,6 @@ const checkUser = async (request, h) => {
       }).code(400);
     }
 
-    // Try to find user by email and id
     const user = await prisma.user.findFirst({
       where: {
         AND: [
@@ -58,9 +48,6 @@ const checkUser = async (request, h) => {
   }
 };
 
-/**
- * Sync user data with the database, creating or updating as needed
- */
 const syncUser = async (request, h) => {
   try {
     console.log('Sync user request payload:', request.payload ? {
@@ -78,19 +65,14 @@ const syncUser = async (request, h) => {
       }).code(400);
     }
 
-    // Try to find existing user FIRST by email (prioritize email matching)
     let user = await prisma.user.findFirst({
       where: { email: email }
     });
 
-    // If found by email but ID is different (login with different provider but same email)
     if (user && user.id !== id) {
       console.log(`Found user with same email but different ID. Original ID: ${user.id}, New ID: ${id}`);
-      // Keep existing user, but track the new ID as an alternate ID if needed
-      // You could store this in a separate table if needed
     }
     
-    // If not found by email, try to find by ID
     if (!user) {
       user = await prisma.user.findUnique({
         where: { id: id }
@@ -98,13 +80,11 @@ const syncUser = async (request, h) => {
     }
 
     if (user) {
-      // Update existing user with all relevant fields
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
-          email: email, // Ensure email is always up to date
+          email: email,
           name: name,
-          // Keep existing plan and usage data
           plan: user.plan || 'free',
           usageLimit: user.usageLimit || 30,
           usageCount: user.usageCount || 0,
@@ -112,7 +92,6 @@ const syncUser = async (request, h) => {
         }
       });
     } else {
-      // Create new user with free plan
       user = await prisma.user.create({
         data: {
           id: id,
@@ -150,9 +129,6 @@ const syncUser = async (request, h) => {
   }
 };
 
-/**
- * Get user info from database, create if doesn't exist
- */
 const getUserInfo = async (request, h) => {
   try {
     const { email, providerId } = request.payload;
@@ -164,15 +140,13 @@ const getUserInfo = async (request, h) => {
       }).code(400);
     }
 
-    // Try to find existing user
     let user = await prisma.user.findFirst({
       where: { email: email }
     });
 
     if (!user) {
-      // Create new user with default values
       user = await prisma.user.create({
-        data: {          id: providerId, // Use provider's ID if new user
+        data: {          id: providerId,
           email: email,
           plan: 'free',
           usageLimit: 30,
@@ -206,12 +180,6 @@ const getUserInfo = async (request, h) => {
   }
 };
 
-/**
- * Get user by ID
- * @param {Object} request - Hapi request object
- * @param {Object} h - Hapi response toolkit
- * @returns {Object} User data
- */
 const getUserById = async (request, h) => {
   try {
     const { id } = request.params;
@@ -223,7 +191,6 @@ const getUserById = async (request, h) => {
       }).code(400);
     }
 
-    // Try to find user by ID
     const user = await prisma.user.findUnique({
       where: { id: id },
       include: {
@@ -247,10 +214,9 @@ const getUserById = async (request, h) => {
         status: 'error',
         message: 'User not found'
       }).code(404);
-    }    // Check if user has active premium subscription
+    }
     const hasActivePremium = user.subscriptions && user.subscriptions.length > 0;
     
-    // TEMPORARY FIX: Consider users with pending subscriptions as premium
     const hasPendingSubscription = await prisma.subscription.findFirst({
       where: {
         userId: user.id,
@@ -259,9 +225,7 @@ const getUserById = async (request, h) => {
       }
     });
     
-    // If user has either active premium or pending subscription, set as premium
     const currentPlan = hasActivePremium || hasPendingSubscription ? 'premium' : (user.plan || 'free');
-      // Update user plan if it doesn't match subscription status
     if (currentPlan !== user.plan) {      console.log(`Updating user ${user.id} plan from ${user.plan} to ${currentPlan} based on subscription status`);
       await prisma.user.update({
         where: { id: user.id },
@@ -300,9 +264,6 @@ const getUserById = async (request, h) => {
   }
 };
 
-/**
- * Get user profile
- */
 const getUserProfile = async (request, h) => {
   try {
     const { id } = request.payload;
@@ -348,12 +309,6 @@ const getUserProfile = async (request, h) => {
   }
 };
 
-/**
- * Update user usage count when classifying waste
- * @param {Object} request - Hapi request object
- * @param {Object} h - Hapi response toolkit
- * @returns {Object} Updated user data
- */
 const updateUsage = async (request, h) => {
   try {
     console.log('Updating usage count request:', request.payload);
@@ -378,7 +333,6 @@ const updateUsage = async (request, h) => {
       }).code(404);
     }
 
-    // Update user usage count
     const updatedUser = await prisma.user.update({
       where: { id: id },
       data: {
@@ -413,12 +367,6 @@ const updateUsage = async (request, h) => {
   }
 };
 
-/**
- * Look up user by email
- * @param {Object} request - Hapi request object
- * @param {Object} h - Hapi response toolkit
- * @returns {Object} User data
- */
 const getUserByEmail = async (request, h) => {
   try {
     const { email } = request.payload;
@@ -432,7 +380,6 @@ const getUserByEmail = async (request, h) => {
       }).code(400);
     }
 
-    // Try to find user by email
     const user = await prisma.user.findFirst({
       where: { email: email }
     });
