@@ -253,12 +253,18 @@ const handlePaymentNotification = async (request, h) => {
         (transactionStatus === 'capture' && fraudStatus === 'accept')) {
       
       await prisma.$transaction(async (tx) => {
+        // Get current user data to preserve usage count
+        const currentUser = await tx.user.findUnique({
+          where: { id: user.id },
+          select: { usageCount: true }
+        });
+        
         await tx.user.update({
           where: { id: user.id },
           data: {
             plan: 'premium',
             usageLimit: 10000,
-            usageCount: 0
+            usageCount: currentUser?.usageCount || 0 // Preserve existing usage count
           }
         });
 

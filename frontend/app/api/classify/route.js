@@ -233,30 +233,38 @@ export async function POST(request) {
     
     try {
       console.log('Incrementing usage count for user:', user.id);
-      const syncResponse = await fetch(`${backendUrl}/api/users/update-usage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: user.id
-        })
-      });
-      
-      if (!syncResponse.ok) {
-        const errText = await syncResponse.text();
-        console.error('Gagal increment usage count:', errText);
-      } else {
-        const syncResult = await syncResponse.json();
-        console.log('Berhasil increment usage count:', JSON.stringify(syncResult));
+      try {
+        const syncResponse = await fetch(`${backendUrl}/api/users/update-usage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: user.id
+          })
+        });
         
-        if (syncResult && syncResult.data && typeof syncResult.data.usageCount === 'number') {
-          user.usageCount = syncResult.data.usageCount;
-          console.log('Updated user count to:', user.usageCount);
-        } else {
+        if (!syncResponse.ok) {
+          const errText = await syncResponse.text();
+          console.error('Gagal increment usage count:', errText);
           user.usageCount = (user.usageCount || 0) + 1;
-          console.log('Incremented count locally to:', user.usageCount);
+          console.log('Fallback: Incremented count locally:', user.usageCount);
+        } else {
+          const syncResult = await syncResponse.json();
+          console.log('Berhasil increment usage count:', JSON.stringify(syncResult));
+          
+          if (syncResult && syncResult.data && typeof syncResult.data.usageCount === 'number') {
+            user.usageCount = syncResult.data.usageCount;
+            console.log('Updated user count to:', user.usageCount);
+          } else {
+            user.usageCount = (user.usageCount || 0) + 1;
+            console.log('Incremented count locally to:', user.usageCount);
+          }
         }
+      } catch (fetchError) {
+        console.error('Error saat memanggil API update-usage:', fetchError.message);
+        user.usageCount = (user.usageCount || 0) + 1;
+        console.log('Error fallback: Incremented count locally:', user.usageCount);
       }
     } catch (syncError) {
       console.error('Error saat increment usage count:', syncError);

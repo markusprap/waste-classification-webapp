@@ -50,15 +50,19 @@ async function autoFixPendingSubscriptions() {
           }
         });
         
+        // Get current usage count
+        const currentUsageCount = user.usageCount || 0;
+        
         await prisma.user.update({
           where: { id: user.id },
           data: {
             plan: 'premium',
-            usageLimit: 10000
+            usageLimit: 10000,
+            usageCount: currentUsageCount // Preserve existing usage count
           }
         });
         
-        console.log(`✅ Successfully activated premium for ${user.email}`);
+        console.log(`✅ Successfully activated premium for ${user.email} (usageCount: ${currentUsageCount})`);
         successCount++;
         
       } catch (error) {
