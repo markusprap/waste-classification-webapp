@@ -56,12 +56,6 @@ The project includes a pre-seeded SQLite database (`backend/database/prisma/dev.
     npx prisma generate
     ```
 
-2. Run the seeding script to populate the database with sample data:
-    ```bash
-    cd backend
-    node scripts/run-final-seeding.js
-    ```
-
 ## Subscription Plans
 
 The application offers two subscription plans:
@@ -76,10 +70,6 @@ The payment system is implemented using Midtrans as the payment gateway:
 1. Users can upgrade from Free to Premium plan in the user dashboard
 2. Payment is processed securely through Midtrans
 3. Users receive immediate access to Premium features upon successful payment
-
-For detailed information about the payment implementation, see:
-- [Payment System Documentation](./docs/PAYMENT_SYSTEM.md)
-- [Midtrans Testing Guide](./docs/MIDTRANS_TESTING_GUIDE.md)
 
 ## Contributors
 
