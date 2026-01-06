@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Frontend - Next.js Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_ML_SERVICE_URL=http://localhost:5000
+    depends_on:
+      - backend
+      - ml-service
+    networks:
+      - waste-network
+
+  # Backend - Hapi.js API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+      - ML_SERVICE_URL=http://ml-service:5000
+      - FRONTEND_URL=http://localhost:3000
+      # Add your Midtrans keys here
+      # - MIDTRANS_SERVER_KEY=your_key
+      # - MIDTRANS_CLIENT_KEY=your_key
+    depends_on:
+      - ml-service
+    volumes:
+      - ./backend/database:/app/database
+    networks:
+      - waste-network
+
+  # ML Service - Flask + TensorFlow
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5000
+      - FLASK_ENV=production
+    networks:
+      - waste-network
+
+networks:
+  waste-network:
+    driver: bridge

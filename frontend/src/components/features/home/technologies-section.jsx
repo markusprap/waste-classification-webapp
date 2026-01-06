@@ -6,24 +6,52 @@ import { useLanguage } from "@/models/language-context"
 export function TechnologiesSection() {
   const { t } = useLanguage()
 
+  const techIcons = [
+    { src: "/images/tech/python.png", name: "Python", color: "from-blue-500 to-yellow-500" },
+    { src: "/images/icons/atom.png", name: "React", color: "from-cyan-400 to-blue-500" },
+    { src: "/images/tech/nextjs.png", name: "Next.js", color: "from-gray-700 to-gray-950" },
+    { src: "/images/tech/nodejs.png", name: "Node.js", color: "from-green-500 to-emerald-600" },
+  ]
+
   return (
-    <section className="py-20 md:py-24">
-      <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
-        <h2 className="mb-16 text-center text-3xl font-bold">{t("tech.title")}</h2>        <div className="flex flex-wrap items-center justify-center gap-10 md:gap-14 lg:gap-16">
-          <TechIcon src="/images/tech/python.png" alt="Python" />
-          <TechIcon src="/images/icons/atom.png" alt="React" />
-          <TechIcon src="/images/tech/nextjs.png" alt="Next.js" />
-          <TechIcon src="/images/tech/nodejs.png" alt="Node.js" />
+    <section className="py-24 bg-white relative overflow-hidden">
+      <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16 relative z-10">
+        <div className="flex flex-col items-center">
+          <h2 className="text-sm font-bold tracking-widest text-gray-400 uppercase mb-8">
+            {t("tech.title").toUpperCase()}
+          </h2>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14">
+            {techIcons.map((tech, index) => (
+              <div
+                key={index}
+                className="group relative flex flex-col items-center gap-3 transition-all duration-300 hover:-translate-y-2"
+              >
+                <div className={`
+                  w-20 h-20 rounded-[2rem] bg-gray-50 flex items-center justify-center p-4 
+                  border border-gray-100 shadow-sm transition-all duration-500
+                  group-hover:bg-white group-hover:shadow-2xl group-hover:shadow-gray-200 group-hover:border-transparent
+                  relative overflow-hidden
+                `}>
+                  {/* Hover glow */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${tech.color} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
+
+                  <Image
+                    src={tech.src || "/placeholder.svg"}
+                    alt={tech.name}
+                    width={48}
+                    height={48}
+                    className="h-10 w-10 object-contain group-hover:scale-110 transition-transform duration-500 relative z-10"
+                  />
+                </div>
+                <span className="text-xs font-bold text-gray-400 group-hover:text-gray-900 transition-colors uppercase tracking-wider">
+                  {tech.name}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-function TechIcon({ src, alt }) {
-  return (
-    <div className="flex h-8 w-8 items-center justify-center md:h-10 md:w-10">
-      <Image src={src || "/placeholder.svg"} alt={alt} width={40} height={40} className="h-auto w-full" />
-    </div>
-  )
-}

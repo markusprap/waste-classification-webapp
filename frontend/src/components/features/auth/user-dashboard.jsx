@@ -6,12 +6,18 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/models/auth-context';
 import { useLanguage } from '@/models/language-context';
 import { Button } from '@/components/ui/button';
-import { 
-  AlertDialog,   AlertDialogContent, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+import {
+  AlertDialog, AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { useSession } from 'next-auth/react';
+import {
+  User, Mail, ArrowRight, Zap,
+  ShieldCheck, LogOut, RefreshCw,
+  Trophy, Flame, Target, Sparkles,
+  ChevronRight
+} from 'lucide-react';
 
 export default function UserDashboard({ isOpen, onClose }) {
   const { user, refreshUser, refreshUserSession } = useAuth();
@@ -21,7 +27,7 @@ export default function UserDashboard({ isOpen, onClose }) {
   const { update } = useSession();
   const lastRefreshTime = useRef(0);
   const [localUsageCount, setLocalUsageCount] = useState(0);
-  
+
   useEffect(() => {
     if (user && typeof user.usageCount === 'number') {
       setLocalUsageCount(user.usageCount);
@@ -65,11 +71,11 @@ export default function UserDashboard({ isOpen, onClose }) {
         onClose();
       }
     }
-    
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -77,7 +83,7 @@ export default function UserDashboard({ isOpen, onClose }) {
 
   const handleLogout = async () => {
     onClose();
-    
+
     try {
       await signOut({ redirect: false });
       window.location.href = '/';
@@ -90,9 +96,9 @@ export default function UserDashboard({ isOpen, onClose }) {
   const handleUpgrade = () => {
     onClose();
     router.push('/payment/confirm');
-  };  const getPlanBadgeColor = (plan) => {
+  }; const getPlanBadgeColor = (plan) => {
     if (!plan) return 'bg-gray-100 text-gray-800 border border-gray-300';
-    
+
     switch (plan) {
       case 'free': return 'bg-gray-100 text-gray-800 border border-gray-300';
       case 'premium': return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm';
@@ -101,7 +107,7 @@ export default function UserDashboard({ isOpen, onClose }) {
   };
   const getMonthlyLimit = (plan) => {
     if (!plan) return 30;
-    
+
     switch (plan) {
       case 'free': return 30;
       case 'premium': return 10000;
@@ -119,112 +125,135 @@ export default function UserDashboard({ isOpen, onClose }) {
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="sm:max-w-lg" ref={dialogRef}>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-xl font-bold text-center">
-            {language === 'id' ? 'Dashboard Pengguna' : 'User Dashboard'}
-          </AlertDialogTitle>
-        </AlertDialogHeader>
+      <AlertDialogContent className="sm:max-w-xl p-0 overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
 
-        <div className="space-y-6">
-          <div className="bg-gray-50 rounded-lg p-4">            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-lg">{user.name}</h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeColor(user.plan)}`}>
-                {user.plan ? user.plan.toUpperCase() : 'FREE'}
-              </span>
-            </div>
-            <p className="text-gray-600 text-sm">{user.email}</p>
-          </div>          
-          <div className="bg-green-50 rounded-lg p-4">            <h4 className="font-semibold mb-3 flex items-center justify-between">
-              <span>{language === 'id' ? 'Penggunaan Bulan Ini' : "This Month's Usage"}</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                (localUsageCount / getMonthlyLimit(user.plan) > 0.9) 
-                ? 'bg-red-100 text-red-800 border border-red-300' 
-                : (localUsageCount / getMonthlyLimit(user.plan) > 0.7)
-                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                  : 'bg-green-100 text-green-800 border border-green-300'
-              }`}>
-                {language === 'id' ? 'Batas Klasifikasi' : 'Classification Limit'}
-              </span>
-            </h4>
-            
-            <div className="mb-4 text-center">
-              <div className="flex items-center justify-center text-3xl font-bold">
-                <span className="text-gray-800">{localUsageCount.toLocaleString()}</span>
-                <span className="text-gray-400 mx-2">/</span>
-                <span className="text-gray-600">{getMonthlyLimit(user.plan).toLocaleString()}</span>
+        <div className="p-10 space-y-8">
+          {/* Header Section */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl flex items-center justify-center border border-emerald-50">
+                <User className="w-8 h-8 text-emerald-600" />
               </div>
-              <p className="text-sm text-gray-600 mt-1">
-                {language === 'id' ? 'Klasifikasi digunakan' : 'Classifications used'}
-              </p>
+              <div>
+                <h3 className="text-2xl font-black text-gray-900 leading-tight">{user.name}</h3>
+                <div className="flex items-center gap-2 text-gray-500 font-bold text-xs uppercase tracking-widest mt-1">
+                  <Mail className="w-3.5 h-3.5 text-emerald-500" />
+                  {user.email}
+                </div>
+              </div>
+            </div>
+            <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm transition-all duration-500 ${getPlanBadgeColor(user.plan)}`}>
+              {user.plan === 'premium' ? <Sparkles className="w-3 h-3 inline mr-1.5 mb-0.5" /> : null}
+              {user.plan ? user.plan : 'FREE'} PLAN
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Usage Stats Card */}
+            <div className="relative group overflow-hidden bg-gradient-to-br from-gray-50 to-white p-6 rounded-[2rem] border border-gray-100/50 shadow-sm">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full translate-x-12 -translate-y-12"></div>
+
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100">
+                    <Target className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <button
+                    onClick={handleManualRefresh}
+                    className="p-2 hover:bg-white rounded-lg transition-colors text-gray-400 hover:text-emerald-500"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">
+                  {language === 'id' ? 'Total Klasifikasi' : 'Total Requests'}
+                </h4>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-gray-900 tracking-tight">
+                    {localUsageCount.toLocaleString()}
+                  </span>
+                  <span className="text-gray-400 font-bold text-sm">/ {getMonthlyLimit(user.plan).toLocaleString()}</span>
+                </div>
+
+                <div className="mt-6 space-y-2">
+                  <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-emerald-600">{Math.round(localUsageCount / getMonthlyLimit(user.plan) * 100)}% Used</span>
+                    <span className="text-gray-400">{getMonthlyLimit(user.plan) - localUsageCount} Left</span>
+                  </div>
+                  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden p-0.5 border border-gray-200/50">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ease-out ${(localUsageCount / getMonthlyLimit(user.plan) > 0.9)
+                          ? 'bg-gradient-to-r from-red-500 to-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
+                          : (localUsageCount / getMonthlyLimit(user.plan) > 0.7)
+                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                        }`}
+                      style={{ width: `${getProgressBarWidth(localUsageCount, getMonthlyLimit(user.plan))}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
-                        <div className="space-y-2">
-              <div className="bg-gray-200 rounded-full h-4 p-0.5">
-                <div
-                  className={`h-3 rounded-full transition-all duration-300 ${
-                    (localUsageCount / getMonthlyLimit(user.plan) > 0.9)
-                    ? 'bg-gradient-to-r from-red-500 to-red-600'
-                    : (localUsageCount / getMonthlyLimit(user.plan) > 0.7)
-                      ? 'bg-gradient-to-r from-amber-500 to-amber-600'
-                      : 'bg-gradient-to-r from-green-500 to-green-600'
-                  }`}
-                  style={{ width: `${getProgressBarWidth(localUsageCount, getMonthlyLimit(user.plan))}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center text-xs text-gray-500">
-                <span>
-                  <strong className="text-gray-700">
-                    {(getMonthlyLimit(user.plan) - localUsageCount).toLocaleString()}
-                  </strong>
-                  {language === 'id' ? ' tersisa' : ' remaining'}
-                </span>
-                <span>
-                  <strong className="text-gray-700">
-                    {Math.round(localUsageCount / getMonthlyLimit(user.plan) * 100)}%
-                  </strong>
-                  {language === 'id' ? ' terpakai' : ' used'}
-                </span>
+            {/* Quick Actions / Achievements Preview */}
+            <div className="bg-gradient-to-br from-emerald-600 to-teal-600 p-6 rounded-[2rem] text-white shadow-xl shadow-emerald-600/20 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute bottom-0 right-0 w-40 h-40 bg-white/10 blur-3xl rounded-full translate-x-20 translate-y-20 transition-transform duration-700 group-hover:scale-150"></div>
+
+              <div className="relative z-10">
+                <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center mb-4">
+                  <Trophy className="w-5 h-5 text-emerald-50" />
+                </div>
+                <h4 className="font-black text-emerald-50/70 text-[10px] uppercase tracking-widest mb-1">Impact Level</h4>
+                <p className="text-2xl font-black">Eco Warrior</p>
+                <p className="text-emerald-100/70 text-xs font-bold mt-2 leading-tight">
+                  {language === 'id'
+                    ? 'Terus klasifikasi sampah untuk meningkatkan levelmu!'
+                    : 'Keep classifying to level up your environmental impact!'}
+                </p>
               </div>
             </div>
           </div>
+
+          {/* Upgrade Section */}
           {(!user.plan || user.plan === 'free') && (
-            <div className="space-y-3">
-              <h4 className="font-semibold">
-                {language === 'id' ? 'Upgrade Plan Anda' : 'Upgrade Your Plan'}
-              </h4>
-              <div className="grid grid-cols-1 gap-3">
-                <div className="border rounded-lg p-3 hover:bg-blue-50 transition-colors">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h5 className="font-medium">Premium Plan</h5>
-                      <p className="text-sm text-gray-600 mb-1">
-                        {language === 'id' ? '10,000 klasifikasi per bulan' : '10,000 classifications per month'}
-                      </p>
-                      <p className="text-xs font-medium text-green-600">
-                        Rp 99.000 {language === 'id' ? 'per bulan' : 'per month'}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleUpgrade}
-                      size="sm"
-                      className="bg-black hover:bg-gray-800 text-white"
-                    >
-                      {language === 'id' ? 'Upgrade' : 'Upgrade'}
-                    </Button>
+            <div className="bg-emerald-50/50 rounded-[2.5rem] p-8 border border-emerald-100/50 relative group cursor-pointer hover:bg-emerald-50 transition-colors" onClick={handleUpgrade}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/10 group-hover:rotate-6 transition-transform">
+                    <Zap className="w-7 h-7 text-emerald-500 fill-emerald-500" />
                   </div>
+                  <div>
+                    <h5 className="font-black text-gray-900 text-lg leading-tight">Go Premium</h5>
+                    <p className="text-emerald-700 text-xs font-bold tracking-tight mt-1">
+                      10,000 requests & priority support
+                    </p>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 group-hover:translate-x-1 transition-transform">
+                  <ChevronRight className="w-6 h-6" />
                 </div>
               </div>
             </div>
           )}
 
-          <Button
-            onClick={handleLogout}
-            variant="destructive"
-            className="w-full"
-          >
-            {language === 'id' ? 'Keluar' : 'Logout'}
-          </Button>
+          {/* Footer Actions */}
+          <div className="pt-2 flex items-center gap-4">
+            <button
+              onClick={onClose}
+              className="flex-1 py-4 bg-gray-50 hover:bg-gray-100 text-gray-500 font-black text-xs uppercase tracking-widest rounded-2xl transition-all border border-gray-100"
+            >
+              {language === 'id' ? 'Tutup' : 'Close Dashboard'}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-6 py-4 bg-rose-50 hover:bg-rose-100 text-rose-600 font-black text-xs uppercase tracking-widest rounded-2xl transition-all border border-rose-100 flex items-center gap-2 group"
+            >
+              <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              {language === 'id' ? 'Logout' : 'Logout'}
+            </button>
+          </div>
         </div>
       </AlertDialogContent>
     </AlertDialog>

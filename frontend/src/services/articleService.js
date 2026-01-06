@@ -9,12 +9,12 @@ const categoryMapping = {
   'paper': 'recycling',
   'plastic': 'recycling',
   'trash': 'general-waste',
-  
+
   // Specific glass types
   'brown-glass': 'recycling',
   'green-glass': 'recycling',
   'white-glass': 'recycling',
-  
+
   // Other categories
   'battery': 'e-waste',
   'biological': 'organic',
@@ -59,9 +59,21 @@ export async function fetchArticlesByMainCategory(mainCategory, category, limit 
       const fallbackRes = await fetch(`/api/articles?category=Lainnya&limit=${limit}`);
       if (fallbackRes.ok) {
         const fallbackData = await fallbackRes.json();
-        return fallbackData.articles || [];
+        if (fallbackData.articles && fallbackData.articles.length > 0) {
+          return fallbackData.articles;
+        }
       }
     }
+
+    // Final fallback: just get latest articles if still empty
+    if (!data.articles || data.articles.length === 0) {
+      const latestRes = await fetch(`/api/articles?limit=${limit}`);
+      if (latestRes.ok) {
+        const latestData = await latestRes.json();
+        return latestData.articles || [];
+      }
+    }
+
     return data.articles || [];
   } catch (err) {
     console.error('Error fetching articles:', err);
@@ -79,21 +91,31 @@ export async function fetchArticlesByCategory(category, limit = 3) {
   try {
     // Map the waste category to a blog category
     const blogCategory = categoryMapping[category.toLowerCase()] || 'general-waste';
-    
+
     const res = await fetch(`/api/articles?category=${encodeURIComponent(blogCategory)}&limit=${limit}`);
     if (!res.ok) throw new Error('Failed to fetch articles');
     const data = await res.json();
-    
+
     // If no articles found for the specific category, try to get general articles
     if ((!data.articles || data.articles.length === 0) && blogCategory !== 'general-waste') {
-      console.log(`No articles found for category ${blogCategory}, trying general-waste`);
       const fallbackRes = await fetch(`/api/articles?category=general-waste&limit=${limit}`);
       if (fallbackRes.ok) {
         const fallbackData = await fallbackRes.json();
-        return fallbackData.articles || [];
+        if (fallbackData.articles && fallbackData.articles.length > 0) {
+          return fallbackData.articles;
+        }
       }
     }
-    
+
+    // Final fallback: just get latest articles
+    if (!data.articles || data.articles.length === 0) {
+      const latestRes = await fetch(`/api/articles?limit=${limit}`);
+      if (latestRes.ok) {
+        const latestData = await latestRes.json();
+        return latestData.articles || [];
+      }
+    }
+
     return data.articles || [];
   } catch (err) {
     console.error('Error fetching articles:', err);

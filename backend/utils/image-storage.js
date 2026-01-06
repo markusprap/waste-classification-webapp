@@ -29,9 +29,9 @@ const generateFilename = (originalname) => {
 };
 
 const validateImage = (file) => {
-  console.log('Validating image file:', file ? 
+  console.log('Validating image file:', file ?
     {
-      type: typeof file, 
+      type: typeof file,
       mimetype: file.mimetype || file.type,
       size: file.size,
       hasBuffer: !!file.buffer,
@@ -39,45 +39,62 @@ const validateImage = (file) => {
       hasHapi: !!file.hapi,
       originalFilename: file.originalFilename || file.name
     } : 'null');
-    
+
   if (!file) {
     throw new Error('No file uploaded');
   }
 
+  // Handle Hapi file objects
   if (file.hapi && file.hapi.filename) {
     if (!ALLOWED_TYPES.includes(file.hapi.headers['content-type'])) {
       throw new Error(`Invalid file type: ${file.hapi.headers['content-type']}. Only PNG, JPG, and GIF are allowed`);
     }
-    
+
     const fileSize = file.hapi.bytes || 0;
     if (fileSize > MAX_FILE_SIZE) {
       throw new Error(`File too large: ${fileSize} bytes. Maximum size is 10MB`);
     }
-    
+
     return;
   }
-  
-  if (!ALLOWED_TYPES.includes(file.mimetype)) {
-    throw new Error(`Invalid file type: ${file.mimetype}. Only PNG, JPG, and GIF are allowed`);
+
+  // Handle Formidable/Generic file objects
+  const mimetype = file.mimetype || file.type;
+  if (!mimetype) {
+    // If mimetype is missing, try to infer from extension or skip strict validation if buffer exists
+    if (!file.originalFilename && !file.name) {
+      console.warn('File has no mimetype and no name, skipping strict MIME check but logging warning');
+    } else {
+      const name = file.originalFilename || file.name || '';
+      const ext = name.toLowerCase().split('.').pop();
+      if (!['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+        throw new Error(`Invalid file type: undefined (inferred from ${name}). Only PNG, JPG, and GIF are allowed`);
+      }
+      // If extension is valid, we assume it's okay for now if mimetype is missing
+      return;
+    }
+  } else if (!ALLOWED_TYPES.includes(mimetype)) {
+    throw new Error(`Invalid file type: ${mimetype}. Only PNG, JPG, and GIF are allowed`);
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error(`File too large: ${file.size} bytes. Maximum size is 10MB`);
+  const size = file.size || (file.buffer ? file.buffer.length : 0);
+  if (size > MAX_FILE_SIZE) {
+    throw new Error(`File too large: ${size} bytes. Maximum size is 10MB`);
   }
 };
 
 const storeArticleImage = async (file) => {
   try {
     console.log('storeArticleImage called with:', typeof file, file ? Object.keys(file) : 'null');
-    
+
     if (typeof file === 'string') {
       console.log('Handling file as string URL:', file);
       const filename = file.split('/').pop();
       return {
         filename,
         originalname: filename,
-        mimetype: filename.endsWith('.jpg') || filename.endsWith('.jpeg') ? 'image/jpeg' : 
-                 filename.endsWith('.png') ? 'image/png' : 'image/gif',
+        mimetype: filename.endsWith('.jpg') || filename.endsWith('.jpeg') ? 'image/jpeg' :
+          filename.endsWith('.png') ? 'image/png' : 'image/gif',
         size: 0
       };
     }
@@ -91,7 +108,7 @@ const storeArticleImage = async (file) => {
     } else if (file.originalname) {
       originalFilename = file.originalname;
     }
-    
+
     const filename = generateFilename(originalFilename);
     const filepath = path.join(UPLOAD_DIR, filename);
 
@@ -100,9 +117,9 @@ const storeArticleImage = async (file) => {
       console.log('Processing file from buffer, size:', file.buffer.length);
       try {
         await sharp(file.buffer)
-          .resize(MAX_WIDTH, null, { 
+          .resize(MAX_WIDTH, null, {
             withoutEnlargement: true,
-            fit: 'inside' 
+            fit: 'inside'
           })
           .jpeg({ quality: QUALITY })
           .toFile(filepath);
@@ -115,17 +132,17 @@ const storeArticleImage = async (file) => {
     } else if (file.path) {
       console.log('Processing file from path:', file.path);
       await sharp(file.path)
-        .resize(MAX_WIDTH, null, { 
+        .resize(MAX_WIDTH, null, {
           withoutEnlargement: true,
-          fit: 'inside' 
+          fit: 'inside'
         })
         .jpeg({ quality: QUALITY })
         .toFile(filepath);
     } else if (file.hapi) {
       console.log('Processing file from Hapi with keys:', Object.keys(file));
-      
+
       let buffer = null;
-      
+
       if (file._data) {
         console.log('Using _data property');
         buffer = file._data;
@@ -140,7 +157,7 @@ const storeArticleImage = async (file) => {
         if (file._tap && file._tap.payload) {
           buffer = file._tap.payload;
         } else {
-          console.log('Hapi file structure found but no data. Available properties:', 
+          console.log('Hapi file structure found but no data. Available properties:',
             Object.keys(file.hapi));
           if (file.hapi.filename) {
             const tempPath = path.join(os.tmpdir(), file.hapi.filename);
@@ -151,18 +168,18 @@ const storeArticleImage = async (file) => {
           }
         }
       }
-      
+
       if (!buffer) {
         console.error('Could not extract file data from Hapi request', file);
         throw new Error('Could not extract file data from Hapi request');
       }
-      
+
       try {
         console.log('Processing with sharp, buffer size:', buffer.length);
         await sharp(buffer)
-          .resize(MAX_WIDTH, null, { 
+          .resize(MAX_WIDTH, null, {
             withoutEnlargement: true,
-            fit: 'inside' 
+            fit: 'inside'
           })
           .jpeg({ quality: QUALITY })
           .toFile(filepath);
@@ -196,9 +213,9 @@ const storeArticleImage = async (file) => {
         console.log('Processing formidable file as buffer, size:', buffer.length);
         try {
           await sharp(buffer)
-            .resize(MAX_WIDTH, null, { 
+            .resize(MAX_WIDTH, null, {
               withoutEnlargement: true,
-              fit: 'inside' 
+              fit: 'inside'
             })
             .jpeg({ quality: QUALITY })
             .toFile(filepath);
@@ -222,7 +239,7 @@ const storeArticleImage = async (file) => {
 
     let fileSize = 0;
     let fileMimetype = 'image/jpeg';
-    
+
     if (file.hapi) {
       fileSize = file.hapi.bytes || 0;
       fileMimetype = file.hapi.headers['content-type'] || 'image/jpeg';
@@ -245,7 +262,7 @@ const storeArticleImage = async (file) => {
 
 const deleteArticleImage = async (filename) => {
   if (!filename) return;
-  
+
   try {
     const filepath = path.join(UPLOAD_DIR, filename);
     await fs.unlink(filepath);

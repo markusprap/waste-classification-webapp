@@ -40,7 +40,19 @@ module.exports = [
         });
         console.log('Fields:', fields);
         console.log('Files:', files);
-        if (!fields.title || !fields.slug || !fields.content || !fields.category) {
+        // Helper to get single value
+        const getSingleValue = (val) => Array.isArray(val) ? val[0] : val;
+
+        const title = getSingleValue(fields.title);
+        const slug = getSingleValue(fields.slug);
+        const content = getSingleValue(fields.content);
+        const category = getSingleValue(fields.category);
+        const tags = getSingleValue(fields.tags);
+        const author = getSingleValue(fields.author);
+        const readTime = getSingleValue(fields.readTime);
+        const coverImageUrl = getSingleValue(fields.coverImage);
+
+        if (!title || !slug || !content || !category) {
           console.error('Field wajib kosong:', fields);
           return h.response({ error: 'Field wajib tidak boleh kosong' }).code(400);
         }
@@ -48,7 +60,8 @@ module.exports = [
         if (files.image) {
           try {
             console.log('Processing image upload...');
-            let file = files.image;
+            let file = Array.isArray(files.image) ? files.image[0] : files.image;
+
             if (file.filepath && !file.buffer) {
               const buffer = await fs.readFile(file.filepath);
               file = {
@@ -69,15 +82,15 @@ module.exports = [
           console.log('No image file provided');
         }
         const articleData = {
-          title: fields.title,
-          slug: fields.slug,
-          content: fields.content,
-          excerpt: fields.excerpt,
-          category: fields.category,
-          tags: fields.tags,
-          author: fields.author || 'Tim EcoWaste',
-          readTime: parseInt(fields.readTime) || 5,
-          coverImage: coverImage || fields.coverImage,
+          title,
+          slug,
+          content,
+          excerpt: getSingleValue(fields.excerpt),
+          category,
+          tags,
+          author: author || 'Tim EcoWaste',
+          readTime: parseInt(readTime) || 5,
+          coverImage: coverImage || coverImageUrl,
           isPublished: true
         };
         console.log('Data untuk Prisma:', articleData);
@@ -97,39 +110,39 @@ module.exports = [
     }
   },
   {
-    method: 'DELETE',    path: '/api/admin/articles/{id}',
+    method: 'DELETE', path: '/api/admin/articles/{id}',
     handler: async (request, h) => {
       try {
         const { id } = request.params;
-        
+
         if (!id) {
-          return h.response({ 
-            error: 'ID artikel tidak valid.' 
+          return h.response({
+            error: 'ID artikel tidak valid.'
           }).code(400);
         }
-        
+
         const article = await request.server.app.prisma.article.findUnique({
           where: { id: id }
         });
-        
+
         if (!article) {
-          return h.response({ 
-            error: 'Artikel tidak ditemukan.' 
+          return h.response({
+            error: 'Artikel tidak ditemukan.'
           }).code(404);
         }
-        
+
         await request.server.app.prisma.article.delete({
           where: { id: id }
         });
-        
-        return h.response({ 
+
+        return h.response({
           message: 'Artikel berhasil dihapus',
           id: id
         }).code(200);
       } catch (error) {
         console.error('Error deleting article:', error);
-        return h.response({ 
-          error: error.message || 'Gagal menghapus artikel.' 
+        return h.response({
+          error: error.message || 'Gagal menghapus artikel.'
         }).code(500);
       }
     }

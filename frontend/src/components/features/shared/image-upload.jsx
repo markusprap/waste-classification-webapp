@@ -1,14 +1,13 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Upload, Camera, Loader2, X, Image, CameraIcon, Lock } from "lucide-react"
+import { Upload, Camera, Loader2, X, Image, CameraIcon, RefreshCcw, Zap } from "lucide-react"
 import { useLanguage } from "@/models/language-context"
 import { useRouter } from "next/navigation"
 import { ClassificationResult } from "@/components/classification"
 import dynamic from "next/dynamic"
 import { useLoadingState } from "@/hooks/use-loading-state"
 import { useAuth } from "@/models/auth-context"
-import AuthDialog from "@/components/features/auth/auth-dialog"
 import { LimitReachedModal } from "../classification/limit-reached-modal"
 
 const Webcam = dynamic(() => import("react-webcam"), { ssr: false })
@@ -19,32 +18,16 @@ export function ImageUpload() {
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
   const webcamRef = useRef(null)
-  const dialogRef = useRef(null)
   const { withLoading, isLoading } = useLoadingState()
-  const { isAuthenticated } = useAuth()
-
   const [selectedImage, setSelectedImage] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
-  // Remove local isClassifying state
   const [classificationResult, setClassificationResult] = useState(null)
   const [error, setError] = useState(null)
   const [showOptions, setShowOptions] = useState(false)
   const [showWebcam, setShowWebcam] = useState(false)
-  const [authDialogOpen, setAuthDialogOpen] = useState(false)
   const [showLimitModal, setShowLimitModal] = useState(false)
   const [limitInfo, setLimitInfo] = useState(null)
-
-  // Close AuthDialog when clicking outside
-  useEffect(() => {
-    if (!authDialogOpen) return
-    function handleClickOutside(event) {
-      if (dialogRef.current && !dialogRef.current.contains(event.target)) {
-        setAuthDialogOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [authDialogOpen])
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const handleImageSelect = (file, source = "file") => {
     if (!file || !file.type.startsWith('image/')) {
@@ -100,10 +83,12 @@ export function ImageUpload() {
 
   const handleDragOver = (event) => {
     event.preventDefault()
+    setIsDragOver(true)
   }
 
   const handleDragLeave = (event) => {
     event.preventDefault()
+    setIsDragOver(false)
   }
 
   const openCamera = () => {
@@ -155,7 +140,7 @@ export function ImageUpload() {
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                   imageData,
                   location: null
                 }),
@@ -168,8 +153,8 @@ export function ImageUpload() {
                   usageCount: data.usageCount || 0,
                   requireUpgrade: data.requireUpgrade || (data.plan === 'free'),
                   upgradeUrl: data.upgradeUrl || '/payment',
-                  message: data.message || (language === 'id' 
-                    ? 'Anda telah mencapai batas klasifikasi harian.' 
+                  message: data.message || (language === 'id'
+                    ? 'Anda telah mencapai batas klasifikasi harian.'
                     : 'You have reached your daily classification limit.')
                 });
                 setShowLimitModal(true);
@@ -235,6 +220,7 @@ export function ImageUpload() {
     setClassificationResult(null)
     setError(null)
     setShowOptions(false)
+    setIsDragOver(false)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -245,27 +231,9 @@ export function ImageUpload() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden relative">
-        {/* Overlay lock if not authenticated */}
-        {!isAuthenticated && (
-          <>
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
-              <div className="flex flex-col items-center">
-                <Lock className="w-12 h-12 text-gray-400 mb-2" />
-                <div className="text-gray-700 font-semibold text-lg mb-1">{language === "id" ? "Masuk untuk mengklasifikasikan sampah" : "Login to classify waste"}</div>
-                <button
-                  onClick={() => setAuthDialogOpen(true)}
-                  className="mt-2 px-5 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-all"
-                >
-                  {language === "id" ? "Masuk / Daftar" : "Login / Register"}
-                </button>
-              </div>
-            </div>
-            <div ref={dialogRef}>
-              <AuthDialog isOpen={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
-            </div>
-          </>
-        )}
+      <div className="bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden relative group/container">
+        {/* Header Decoration */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 z-10"></div>
 
         {showWebcam && (
           <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center">
@@ -298,23 +266,26 @@ export function ImageUpload() {
         )}
 
         {selectedImage && (
-          <div className="p-6 border-b">
-            <div className="relative">
+          <div className="p-8 border-b border-gray-50">
+            <div className="relative group/image">
+              <div className="absolute inset-0 bg-black/20 group-hover/image:bg-black/10 transition-colors rounded-3xl z-10"></div>
               <img
                 src={selectedImage}
                 alt="Selected waste"
-                className="w-full h-64 object-cover rounded-lg"
+                className="w-full h-80 object-cover rounded-3xl"
               />
               <button
                 onClick={resetUpload}
-                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-md text-gray-900 rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-all duration-300"
               >
-                ×
+                <X className="w-5 h-5" />
               </button>
             </div>
             {selectedFile && (
-              <div className="mt-2 text-sm text-gray-600 text-center">
-                {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+              <div className="mt-4 flex items-center justify-center gap-4 text-sm font-medium text-gray-400">
+                <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+                <div className="w-1.5 h-1.5 bg-gray-200 rounded-full"></div>
+                <span>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
               </div>
             )}
           </div>
@@ -339,33 +310,53 @@ export function ImageUpload() {
             />
 
             <div
-              className="p-8 border-2 border-dashed border-gray-300 rounded-lg m-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
+              className={`
+                min-h-[300px] flex flex-col items-center justify-center p-10 
+                border-2 border-dashed rounded-[2.5rem] transition-all duration-500
+                cursor-pointer overflow-hidden relative m-8
+                ${isDragOver
+                  ? 'border-emerald-500 bg-emerald-50/50 scale-[0.98]'
+                  : 'border-gray-200 bg-gray-50/30 hover:border-emerald-300 hover:bg-emerald-50/20'}
+              `}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onClick={showUploadOptions}
             >
-              <div className="space-y-4">
-                <div className="flex justify-center space-x-3">
-                  <Upload className="w-8 h-8 text-gray-400" />
-                  <Camera className="w-8 h-8 text-gray-400" />
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-100/20 blur-2xl rounded-full translate-x-12 -translate-y-12"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-teal-100/20 blur-2xl rounded-full -translate-x-12 translate-y-12"></div>
+
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="mb-8 p-6 bg-white rounded-3xl shadow-xl shadow-emerald-500/10 group-hover/container:scale-110 group-hover/container:rotate-3 transition-transform duration-500">
+                  <div className="flex gap-4">
+                    <Upload className="w-8 h-8 text-emerald-500" />
+                    <Camera className="w-8 h-8 text-teal-500" />
+                  </div>
                 </div>
-                <div>
-                  <p className="text-lg font-medium text-gray-900">
-                    {language === "id" ? "Unggah atau foto gambar sampah" : "Upload or capture waste image"}
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900 mb-3">
+                    {language === "id" ? "Klasifikasi Sekarang" : "Classify Now"}
                   </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    {language === "id" 
-                      ? "Pilih dari galeri, ambil foto, atau seret file | PNG, JPG, GIF hingga 10MB" 
-                      : "Choose from gallery, take photo, or drag file | PNG, JPG, GIF up to 10MB"}
+                  <p className="text-gray-500 font-medium max-w-[280px] leading-relaxed mx-auto">
+                    {language === "id"
+                      ? "Unggah galeri, ambil foto, atau seret file gambar di sini"
+                      : "Upload from gallery, capture photo, or drag image here"}
                   </p>
+                </div>
+                <div className="mt-8 flex items-center gap-3 py-2 px-5 bg-white rounded-full text-xs font-bold text-gray-400 shadow-sm border border-gray-100">
+                  <span className="text-emerald-500">PNG</span>
+                  <span>JPG</span>
+                  <span>GIF</span>
+                  <span className="text-gray-200">|</span>
+                  <span>MAX 10MB</span>
                 </div>
               </div>
             </div>
 
             {showOptions && (
               <>
-                <div 
+                <div
                   className="fixed inset-0 bg-black bg-opacity-50 z-40"
                   onClick={() => setShowOptions(false)}
                 />
@@ -387,34 +378,41 @@ export function ImageUpload() {
                     <div className="p-4 space-y-3">
                       <button
                         onClick={openCamera}
-                        className="w-full flex items-center space-x-3 p-3 text-left bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all duration-300 border border-emerald-200 hover:border-emerald-300"
+                        className="group w-full flex items-center gap-4 p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition-all border border-emerald-100/50 hover:border-emerald-200 text-left"
                       >
-                        <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                          <CameraIcon className="w-5 h-5 text-white" />
+                        <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform duration-500 shrink-0">
+                          <CameraIcon className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-emerald-900 text-base mb-0.5 leading-none">
                             {language === "id" ? "Ambil Foto" : "Take Photo"}
+                          </h4>
+                          <p className="text-emerald-700/60 text-[10px] font-bold leading-tight uppercase tracking-wider">
+                            {language === "id" ? "Kamera Langsung" : "Instant Capture"}
                           </p>
-                          <p className="text-sm text-gray-600">
-                            {language === "id" ? "Gunakan kamera untuk foto langsung" : "Use camera to capture directly"}
-                          </p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-lg font-black">→</span>
                         </div>
                       </button>
+
                       <button
                         onClick={openGallery}
-                        className="w-full flex items-center space-x-3 p-3 text-left bg-teal-50 hover:bg-teal-100 rounded-lg transition-all duration-300 border border-teal-200 hover:border-teal-300"
+                        className="group w-full flex items-center gap-4 p-4 rounded-2xl bg-teal-50 hover:bg-teal-100 transition-all border border-teal-100/50 hover:border-teal-200 text-left"
                       >
-                        <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
-                          <Image className="w-5 h-5 text-white" />
+                        <div className="w-12 h-12 bg-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-110 transition-transform duration-500 shrink-0">
+                          <Image className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {language === "id" ? "Pilih dari Galeri" : "Choose from Gallery"}
+                        <div className="flex-1">
+                          <h4 className="font-bold text-teal-900 text-base mb-0.5 leading-none">
+                            {language === "id" ? "Pilih Galeri" : "Choose Gallery"}
+                          </h4>
+                          <p className="text-teal-700/60 text-[10px] font-bold leading-tight uppercase tracking-wider">
+                            {language === "id" ? "Dari Perangkat" : "From Device"}
                           </p>
-                          <p className="text-sm text-gray-600">
-                            {language === "id" ? "Pilih foto dari penyimpanan" : "Select photo from storage"}
-                          </p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-lg font-black">→</span>
                         </div>
                       </button>
                     </div>
@@ -431,33 +429,42 @@ export function ImageUpload() {
           </div>
         )}
 
-        <ClassificationResult 
+        <ClassificationResult
           classificationResult={classificationResult}
           onNavigateToClassify={navigateToClassify}
           onClassifyAgain={resetUpload}
         />
 
         {selectedImage && !classificationResult && (
-          <div className="p-6 bg-gray-50 border-t">
-            {isLoading ? (
-              <div className="flex items-center justify-center space-x-2 py-2">
-                <Loader2 className="w-5 h-5 animate-spin text-green-600" />
-                <span className="text-green-700">
-                  {language === "id" ? "Menganalisis dengan AI..." : "Analyzing with AI..."}
-                </span>
-              </div>
-            ) : (
-              <button
-                onClick={classifyImage}
-                className="w-full px-6 py-3 rounded-lg transition-all duration-300 font-medium transform hover:scale-105 shadow-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-              >
-                {language === "id" ? "Klasifikasi dengan AI" : "Classify with AI"}
-              </button>
-            )}
+          <div className="p-8 pt-0">
+            <button
+              onClick={classifyImage}
+              disabled={isLoading}
+              className={`
+                w-full h-16 rounded-2xl font-extrabold text-lg tracking-wide
+                transition-all duration-300 shadow-xl
+                flex items-center justify-center gap-3
+                ${isLoading
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transform hover:scale-[1.02] active:scale-[0.98] shadow-emerald-500/25'}
+              `}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  {language === "id" ? "MENGANALISIS..." : "ANALYZING..."}
+                </>
+              ) : (
+                <>
+                  <Zap className="w-6 h-6" />
+                  {language === "id" ? "KLASIFIKASI DENGAN AI" : "CLASSIFY WITH AI"}
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>
-      <LimitReachedModal 
+      <LimitReachedModal
         isOpen={showLimitModal}
         onClose={() => setShowLimitModal(false)}
         limitInfo={limitInfo}

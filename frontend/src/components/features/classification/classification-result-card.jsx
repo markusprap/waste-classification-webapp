@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Lightbulb, Recycle, Leaf, Trash2, RotateCcw } from "lucide-react"
+import { CheckCircle, Lightbulb, Recycle, Leaf, Trash2, RotateCcw, Target } from "lucide-react"
 import wasteInfo from "./waste-info.json"
 
 const CATEGORY_MAP = {
@@ -334,90 +334,143 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
     return methods[methodToUse] ? (language === "id" ? methods[methodToUse].id : methods[methodToUse].en) : methodToUse
   }
   return (
-    <div className="relative space-y-6">
-      {isLoading && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 rounded-xl">
-          <div className="w-16 h-16 mb-4 relative flex items-center justify-center">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-gradient-to-tr from-green-400 via-blue-400 to-yellow-400 opacity-30 animate-spin"></span>
-            <span className="relative inline-flex rounded-full h-12 w-12 bg-gradient-to-tr from-green-400 via-blue-400 to-yellow-400 animate-spin-slow"></span>
-            <span className="absolute inset-2 rounded-full bg-white"></span>
+    <div className="relative space-y-8 animate-fade-in">
+      {/* Main Status Card */}
+      <div className="bg-white rounded-[2.5rem] shadow-[0_15px_40px_rgba(0,0,0,0.03)] border border-gray-100 p-8 md:p-12 relative overflow-hidden">
+        {/* Dynamic Background */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-100/30 to-teal-100/30 blur-3xl opacity-50"></div>
+
+        <div className="relative z-10 flex flex-col items-center text-center">
+          {/* Badge */}
+          <div className="mb-8 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-emerald-100 shadow-sm animate-bounce-subtle">
+            <CheckCircle className="w-4 h-4" />
+            Confirmed by WasteWise AI
           </div>
-          <div className="text-lg font-semibold text-gray-700 animate-pulse">
-            {language === "id" ? "Mengklasifikasikan gambar..." : "Classifying image..."}
-          </div>
-        </div>
-      )}
-      <div className="p-6 bg-gray-100 border-t rounded-xl">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">
+
+          {/* Title */}
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">
             {language === "id"
               ? getCategoryDisplay(result.typeId || result.type, 'id')
               : getCategoryDisplay(result.type || result.typeId, 'en')}
-          </h3>
-          <p className="text-gray-600 mb-2">
-            {language === "id"
-              ? (result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].id : formatLabel(result.category))
-              : (result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].en : formatLabel(result.category))}
-          </p>
-          <div className="inline-flex items-center bg-green-100 px-3 py-1 rounded-full text-sm font-medium text-green-800 mb-4">
-            {result.confidence}% {language === "id" ? "akurasi" : "confidence"}
+          </h1>
+
+          {/* Subtitle */}
+          <div className="flex items-center gap-3 mb-8">
+            <span className="text-xl font-bold text-gray-400">
+              {language === "id"
+                ? (result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].id : formatLabel(result.category))
+                : (result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].en : formatLabel(result.category))}
+            </span>
+            <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500 rounded-lg text-white font-black text-sm shadow-lg shadow-emerald-500/20">
+              {result.confidence}%
+            </div>
           </div>
-          <p className="text-gray-500 mt-2">
+
+          <p className="text-lg text-gray-500 max-w-lg leading-relaxed mb-10">
             {language === "id"
-              ? `Item ini diklasifikasikan sebagai ${getCategoryDisplay(result.typeId || result.type, 'id')} (${result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].id : formatLabel(result.category)})`
-              : `This item is classified as ${getCategoryDisplay(result.type || result.typeId, 'en')} (${result.category && MAIN_CATEGORY_MAP[result.category] ? MAIN_CATEGORY_MAP[result.category].en : formatLabel(result.category)})`}
+              ? `Item ini diklasifikasikan sebagai ${getCategoryDisplay(result.typeId || result.type, 'id')} dengan tingkat kepercayaan ${result.confidence}%.`
+              : `This item is classified as ${getCategoryDisplay(result.type || result.typeId, 'en')} with a ${result.confidence}% confidence level.`}
           </p>
-        </div>
-      </div>
-      <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
-        <div className="flex items-center space-x-2 mb-3">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <Trash2 className="w-4 h-4 text-blue-600" />
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+            <InfoStat
+              icon={<Trash2 className="w-5 h-5" />}
+              label={language === "id" ? "Pembuangan" : "Disposal"}
+              value={language === "id" ? "Tepat" : "Precise"}
+              color="blue"
+            />
+            <InfoStat
+              icon={<Recycle className="w-5 h-5" />}
+              label={language === "id" ? "Metode" : "Method"}
+              value={getMethodName()}
+              color="emerald"
+            />
+            <InfoStat
+              icon={<Leaf className="w-5 h-5" />}
+              label={language === "id" ? "Eco-Rate" : "Eco-Rate"}
+              value="High"
+              color="teal"
+            />
+            <InfoStat
+              icon={<Target className="w-5 h-5" />}
+              label={language === "id" ? "Verifikasi" : "Verified"}
+              value="AI Base"
+              color="amber"
+            />
           </div>
-          <h4 className="font-semibold text-blue-900">
-            {language === "id" ? "Cara Pembuangan" : "Disposal Instructions"}
-          </h4>
         </div>
-        <p className="text-blue-800">
-          {getWasteInfo(result.typeId || result.type, 'disposal', language)}
-        </p>
       </div>
-      <div className="bg-green-50 rounded-lg border border-green-200 p-6">
-        <div className="flex items-center space-x-2 mb-3">
-          <Lightbulb className="h-5 w-5 text-green-600" />
-          <h4 className="font-semibold text-green-900">
-            {language === "id" ? "Rekomendasi Pengolahan" : "Processing Recommendation"}
-          </h4>
+
+      {/* Warning if low confidence */}
+      {result.confidence < 70 && (
+        <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-8 animate-slide-up">
+          <div className="flex items-start gap-5">
+            <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Lightbulb className="w-7 h-7 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="text-xl font-black text-amber-900 mb-3 tracking-tight">
+                {language === "id" ? "Optimasi Hasil Klasifikasi" : "Optimize Classification"}
+              </h4>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-amber-700 font-medium text-sm">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+                  {language === "id" ? "Gunakan cahaya yang terang" : "Use bright lighting"}
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+                  {language === "id" ? "Jarak objek optimal (15-30cm)" : "Optimal distance (15-30cm)"}
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+                  {language === "id" ? "Background minimalis/polos" : "Clean/minimal background"}
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+                  {language === "id" ? "Fokus pada satu objek tunggal" : "Focus on a single object"}
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
-        <p className="text-green-800">
-          {getWasteInfo(result.typeId || result.type, 'recommendation', language)}
-        </p>
+      )}
+
+      {/* Info Boxes Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <DetailCard
+          icon={<Trash2 className="w-6 h-6" />}
+          title={language === "id" ? "Instruksi Pembuangan" : "Disposal Guide"}
+          content={getWasteInfo(result.typeId || result.type, 'disposal', language)}
+          color="blue"
+        />
+        <DetailCard
+          icon={<Lightbulb className="w-6 h-6" />}
+          title={language === "id" ? "Rekomendasi Olah" : "Processing Ops"}
+          content={getWasteInfo(result.typeId || result.type, 'recommendation', language)}
+          color="emerald"
+        />
+        <DetailCard
+          icon={<Leaf className="w-6 h-6" />}
+          title={language === "id" ? "Dampak Lingkungan" : "Eco-Impact"}
+          content={getWasteInfo(result.typeId || result.type, 'environmental_impact', language)}
+          color="teal"
+        />
       </div>
-      <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-6">
-        <div className="flex items-center space-x-2 mb-3">
-          <Leaf className="h-5 w-5 text-yellow-600" />
-          <h4 className="font-semibold text-yellow-900">
-            {language === "id" ? "Dampak Lingkungan" : "Environmental Impact"}
-          </h4>
-        </div>
-        <p className="text-yellow-800">
-          {getWasteInfo(result.typeId || result.type, 'environmental_impact', language)}
-        </p>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button 
-          onClick={onClassifyAgain} 
-          className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+
+      {/* Final Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 pt-4">
+        <Button
+          onClick={onClassifyAgain}
+          className="h-16 flex-1 bg-gray-900 text-white rounded-[1.25rem] font-bold text-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-xl group"
         >
-          {language === "id" ? "Klasifikasi Lagi" : "Classify Again"}
+          <RotateCcw className="w-5 h-5 mr-3 group-hover:rotate-[-45deg] transition-transform" />
+          {language === "id" ? "Ulangi Klasifikasi" : "New Classification"}
         </Button>
-        
-        <Button 
-          variant="outline" 
-          className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 transition-all duration-300 shadow-md"
+
+        <Button
+          variant="outline"
+          className="h-16 flex-1 border-2 border-emerald-500 text-emerald-700 rounded-[1.25rem] font-bold text-lg hover:bg-emerald-50 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
           onClick={() => {
             const methodsSection = document.querySelector('[data-section="waste-methods"]')
             if (methodsSection) {
@@ -425,9 +478,61 @@ export function ClassificationResultCard({ result, language, onClassifyAgain, is
             }
           }}
         >
-          {language === "id" ? "Lihat Metode Pengelolaan" : "View Management Methods"}
+          <Recycle className="w-5 h-5 mr-3" />
+          {language === "id" ? "Metode Alternatif" : "Alternative Methods"}
         </Button>
       </div>
+      <style jsx global>{`
+        @keyframes bounce-subtle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+        .animate-bounce-subtle {
+          animation: bounce-subtle 4s ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  )
+}
+
+function InfoStat({ icon, label, value, color }) {
+  const colors = {
+    blue: "text-blue-600 bg-blue-50",
+    emerald: "text-emerald-600 bg-emerald-50",
+    teal: "text-teal-600 bg-teal-50",
+    amber: "text-amber-600 bg-amber-50"
+  }
+  return (
+    <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100 flex flex-col items-center">
+      <div className={`w-10 h-10 rounded-xl ${colors[color]} flex items-center justify-center mb-2`}>
+        {icon}
+      </div>
+      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{label}</span>
+      <span className="text-sm font-bold text-gray-900">{value}</span>
+    </div>
+  )
+}
+
+function DetailCard({ icon, title, content, color }) {
+  const colors = {
+    blue: "bg-blue-50 border-blue-100 text-blue-900 icon-blue",
+    emerald: "bg-emerald-50 border-emerald-100 text-emerald-900 icon-emerald",
+    teal: "bg-teal-50 border-teal-100 text-teal-900 icon-teal"
+  }
+  const iconColors = {
+    blue: "bg-blue-500 text-white",
+    emerald: "bg-emerald-500 text-white",
+    teal: "bg-teal-500 text-white"
+  }
+  return (
+    <div className={`rounded-[2rem] p-8 border ${colors[color]} shadow-sm transition-all duration-300 hover:shadow-md h-full flex flex-col`}>
+      <div className={`w-12 h-12 rounded-2xl ${iconColors[color]} flex items-center justify-center mb-6 shadow-lg shadow-black/5`}>
+        {icon}
+      </div>
+      <h4 className="font-black text-lg mb-4 tracking-tight">{title}</h4>
+      <p className="text-sm font-medium opacity-80 leading-relaxed">
+        {content}
+      </p>
     </div>
   )
 }

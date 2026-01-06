@@ -60,21 +60,21 @@ export function ClassifyPageContent() {
   useEffect(() => {
     console.log('🏠 ClassifyPageContent - useEffect triggered');
     console.log('🏠 ClassifyPageContent - searchParams:', Object.fromEntries(searchParams.entries()));
-    
+
     try {
       const hasData = searchParams.get("hasData")
       const source = searchParams.get("source")
-      
+
       if (hasData === "true" && source === "home") {
         try {
           const storedData = sessionStorage.getItem('homeClassificationData')
           if (storedData) {
             const parsedData = JSON.parse(storedData)
             console.log('🏠 Loading classification data from home page:', parsedData)
-            
+
             setHomeClassificationData(parsedData)
             setClassificationData(parsedData)
-            
+
             // Clear the session storage after loading
             sessionStorage.removeItem('homeClassificationData')
           }
@@ -99,44 +99,17 @@ export function ClassifyPageContent() {
       setRecommendedArticles([])
     }
   }, [classificationData])
-  
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1 relative min-h-screen">
         {/* Render blur overlay only on main content if not authenticated */}
-        {!isAuthenticated && scrollY < mapSectionTop - 200 && (
-          <>
-            {/* Blur overlay only on main content */}
-            <div className="absolute inset-0 z-10 backdrop-blur-md bg-white/70 min-h-screen" />
-            {/* Overlay login prompt: container flex-col, pesan plain text, tombol di bawah */}
-            <div 
-              className="fixed inset-0 z-40 flex items-center justify-center"
-              style={{ minHeight: '100vh' }}
-            >
-              <div className="flex flex-col w-full max-w-xs items-stretch justify-between h-40 bg-white/80 rounded-xl shadow-2xl p-4 border border-emerald-100">
-                <div className="flex-1 flex items-center justify-center">
-                  <span className="text-base font-semibold text-emerald-700 text-center">
-                    {language === 'id' ? 'Login diperlukan untuk mengakses fitur klasifikasi' : 'Login required to access classification features'}
-                  </span>
-                </div>
-                <div className="flex-1 flex items-end justify-center">
-                  <button
-                    onClick={handleAuthClick}
-                    className="w-full px-6 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-base shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 transform hover:scale-105"
-                  >
-                    {language === 'id' ? 'Login Sekarang' : 'Login Now'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mx-6 my-4">
             <p><strong>Error:</strong> {error}</p>
-            <button 
+            <button
               onClick={() => setError(null)}
               className="mt-2 px-3 py-1 bg-red-100 hover:bg-red-200 rounded text-sm"
             >
@@ -144,7 +117,7 @@ export function ClassifyPageContent() {
             </button>
           </div>
         )}
-        
+
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-16 md:py-20">
           <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
@@ -187,7 +160,7 @@ export function ClassifyPageContent() {
 
         {/* Article Recommendations */}
         {classificationData && (
-          <ArticleRecommendations 
+          <ArticleRecommendations
             mainCategory={classificationData.mainCategory}
             category={classificationData.category}
           />
@@ -198,7 +171,7 @@ export function ClassifyPageContent() {
         <ScrollToTop />
       </main>
       <Footer />
-      
+
       {/* Auth Dialog */}
       <AuthDialog
         isOpen={authDialogOpen}

@@ -2,132 +2,181 @@
 
 import Image from "next/image"
 import { useLanguage } from "@/models/language-context"
+import { Sparkles } from "lucide-react"
 
 export function BenefitsSection() {
   const { t } = useLanguage()
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-20 md:py-28">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-emerald-200/30 to-teal-200/30 blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-gradient-to-br from-cyan-200/30 to-blue-200/30 blur-3xl"></div>
+    <section className="relative overflow-hidden bg-[#fafafa] py-24 md:py-32">
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-emerald-100/40 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] bg-teal-100/30 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute -bottom-[10%] right-[10%] w-[35%] h-[35%] bg-cyan-100/40 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '4s' }}></div>
       </div>
-      
-      <div className="container relative mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
+
+      <div className="container relative mx-auto px-6 sm:px-8 md:px-12 lg:px-16 z-10">
         {/* Header */}
-        <div className="mb-16 text-center">
-          <div className="mb-4 inline-flex items-center rounded-full bg-emerald-100 px-6 py-3 text-sm font-medium text-emerald-700">
-            ✨ Join 10,000+ Eco Warriors Worldwide
+        <div className="mb-20 text-center max-w-4xl mx-auto">
+          <div className="mb-6 inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm animate-fade-in">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            Join the Green Revolution
           </div>
-          <h2 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
+          <h2 className="mb-8 text-4xl font-extrabold text-gray-900 md:text-5xl lg:text-6xl tracking-tight animate-slide-up">
             {t("benefits.title")}
           </h2>
-          <p className="mx-auto max-w-3xl text-xl text-gray-600 leading-relaxed">
-            Experience the future of waste management. Our AI doesn't just classify - it educates, 
+          <p className="text-xl text-gray-500 leading-relaxed animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            Experience the future of waste management. Our AI doesn't just classify - it educates,
             inspires, and connects you to a global community fighting for a cleaner planet.
           </p>
-          <div className="mt-6 flex justify-center items-center space-x-8 text-sm text-gray-500">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>99.2% Accuracy</span>
+
+          <div className="mt-10 flex flex-wrap justify-center items-center gap-6 text-sm font-medium text-gray-400 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+            <div className="flex items-center gap-2 group">
+              <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full group-hover:scale-150 transition-transform shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+              <span className="group-hover:text-emerald-600 transition-colors">99.2% Prediction Accuracy</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span>Lightning Fast</span>
+            <div className="w-1.5 h-1.5 bg-gray-300 rounded-full overflow-hidden"></div>
+            <div className="flex items-center gap-2 group">
+              <div className="w-2.5 h-2.5 bg-teal-500 rounded-full group-hover:scale-150 transition-transform shadow-[0_0_10px_rgba(20,184,166,0.5)]"></div>
+              <span className="group-hover:text-teal-600 transition-colors">Under 1s Processing</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-              <span>24/7 Available</span>
+            <div className="w-1.5 h-1.5 bg-gray-300 rounded-full overflow-hidden"></div>
+            <div className="flex items-center gap-2 group">
+              <div className="w-2.5 h-2.5 bg-cyan-500 rounded-full group-hover:scale-150 transition-transform shadow-[0_0_10px_rgba(6,182,212,0.5)]"></div>
+              <span className="group-hover:text-cyan-600 transition-colors">24/7 Global Availability</span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-10">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12">
           <BenefitCard
-            icon={<Image src="/images/icons/education.png" alt="Education icon" width={32} height={32} className="h-8 w-8" />}
+            icon={<Image src="/images/icons/education.png" alt="Education icon" width={48} height={48} className="h-10 w-10" />}
             title={t("benefits.educational.title")}
             description={t("benefits.educational.description")}
             color="emerald"
+            delay="0s"
           />
 
           <BenefitCard
-            icon={<Image src="/images/icons/leaf.png" alt="Eco-friendly icon" width={32} height={32} className="h-8 w-8" />}
+            icon={<Image src="/images/icons/leaf.png" alt="Eco-friendly icon" width={48} height={48} className="h-10 w-10" />}
             title={t("benefits.eco.title")}
             description={t("benefits.eco.description")}
             color="teal"
+            delay="0.2s"
           />
 
           <BenefitCard
-            icon={<Image src="/images/icons/robot.png" alt="AI icon" width={32} height={32} className="h-8 w-8" />}
+            icon={<Image src="/images/icons/robot.png" alt="AI icon" width={48} height={48} className="h-10 w-10" />}
             title={t("benefits.ai.title")}
             description={t("benefits.ai.description")}
             color="cyan"
+            delay="0.4s"
           />
         </div>
       </div>
+      <style jsx global>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.8s ease-out forwards;
+        }
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.8s ease-out forwards;
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+        }
+        .animate-float {
+          animation: float 5s ease-in-out infinite;
+        }
+      `}</style>
     </section>
   )
 }
 
-function BenefitCard({ icon, title, description, color }) {
+function BenefitCard({ icon, title, description, color, delay }) {
   const colorClasses = {
     emerald: {
       gradient: "from-emerald-500 to-teal-500",
-      iconBg: "bg-emerald-100 border-emerald-200",
-      iconHover: "group-hover:bg-emerald-500",
-      titleGradient: "from-emerald-600 to-teal-600",
-      hoverShadow: "group-hover:shadow-emerald-500/25"
+      lightBg: "bg-emerald-50",
+      accent: "text-emerald-600",
+      shadow: "shadow-emerald-200"
     },
     teal: {
       gradient: "from-teal-500 to-cyan-500",
-      iconBg: "bg-teal-100 border-teal-200",
-      iconHover: "group-hover:bg-teal-500",
-      titleGradient: "from-teal-600 to-cyan-600",
-      hoverShadow: "group-hover:shadow-teal-500/25"
+      lightBg: "bg-teal-50",
+      accent: "text-teal-600",
+      shadow: "shadow-teal-200"
     },
     cyan: {
       gradient: "from-cyan-500 to-blue-500",
-      iconBg: "bg-cyan-100 border-cyan-200",
-      iconHover: "group-hover:bg-cyan-500",
-      titleGradient: "from-cyan-600 to-blue-600",
-      hoverShadow: "group-hover:shadow-cyan-500/25"
+      lightBg: "bg-cyan-50",
+      accent: "text-cyan-600",
+      shadow: "shadow-cyan-200"
     }
   }
 
   const colors = colorClasses[color]
 
   return (
-    <div className="group relative">
-      {/* Card */}
-      <div className={`relative h-full transform rounded-2xl bg-white/80 backdrop-blur-sm border border-white/50 p-8 text-center shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl ${colors.hoverShadow}`}>
-        {/* Gradient border effect */}
-        <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${colors.gradient} p-[1px] opacity-0 transition-opacity duration-300 group-hover:opacity-100`}>
-          <div className="h-full w-full rounded-2xl bg-white"></div>
-        </div>
-        
-        {/* Content */}
-        <div className="relative z-10">
-          {/* Icon */}
-          <div className={`mx-auto mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl border-2 ${colors.iconBg} transition-all duration-300 ${colors.iconHover} group-hover:scale-110 group-hover:border-transparent`}>
-            <div className="transition-all duration-300 group-hover:brightness-0 group-hover:invert">
+    <div
+      className="group relative animate-slide-up opacity-0"
+      style={{ animationDelay: delay, animationFillMode: 'forwards' }}
+    >
+      {/* Main Card */}
+      <div className={`
+        relative h-full p-10 rounded-[2.5rem] bg-white border border-gray-100 
+        shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500
+        hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] hover:-translate-y-3
+        overflow-hidden
+      `}>
+        {/* Hover Gradient Overlay */}
+        <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-5 blur-2xl transition-opacity duration-500`}></div>
+
+        <div className="relative z-10 flex flex-col h-full">
+          {/* Icon Container */}
+          <div className={`
+            mb-8 w-20 h-20 rounded-3xl ${colors.lightBg} 
+            flex items-center justify-center transition-all duration-500
+            group-hover:scale-110 group-hover:rotate-3
+            relative
+          `}>
+            {/* Inner Glow */}
+            <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
+
+            <div className="relative z-10 grayscale group-hover:grayscale-0 transition-all duration-500 scale-110">
               {icon}
             </div>
           </div>
-          
+
           {/* Title */}
-          <h3 className={`mb-4 text-xl font-bold bg-gradient-to-r ${colors.titleGradient} bg-clip-text text-transparent`}>
+          <h3 className={`text-2xl font-bold text-gray-900 mb-4 transition-colors duration-300 group-hover:${colors.accent}`}>
             {title}
           </h3>
-          
+
           {/* Description */}
-          <p className="text-gray-600 leading-relaxed">
+          <p className="text-gray-500 text-lg leading-relaxed mb-8 flex-grow">
             {description}
           </p>
+
+          {/* Action indicator */}
+          <div className="flex items-center gap-2 text-sm font-bold text-gray-300 group-hover:text-gray-400 transition-colors">
+            <span>DISCOVER</span>
+            <div className={`h-[2px] w-8 rounded-full bg-gray-100 group-hover:w-16 group-hover:bg-gradient-to-r ${colors.gradient} transition-all duration-500`}></div>
+          </div>
         </div>
 
-        {/* Floating particles effect */}
-        <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 opacity-50 animate-ping"></div>
-        <div className="absolute bottom-6 left-6 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400 opacity-40 animate-pulse delay-150"></div>
+        {/* Decorative elements */}
+        <div className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-gray-100 group-hover:bg-emerald-300 transition-colors"></div>
+        <div className="absolute bottom-12 right-12 w-1 h-1 rounded-full bg-gray-100 group-hover:bg-teal-300 transition-colors delay-100"></div>
       </div>
     </div>
   )

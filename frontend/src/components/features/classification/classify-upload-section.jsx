@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { Upload, Camera, X, Loader2, CameraIcon, Image } from "lucide-react"
+import { Upload, Camera, X, Loader2, CameraIcon, Image, RefreshCcw, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/models/language-context"
 import { useAuth } from '@/models/auth-context';
@@ -13,14 +13,14 @@ import { useLoadingState } from "@/hooks/use-loading-state"
 
 const Webcam = dynamic(() => import("react-webcam"), { ssr: false })
 
-export function ClassifyUploadSection({ initialClassificationData, onClassificationUpdate }) {  
+export function ClassifyUploadSection({ initialClassificationData, onClassificationUpdate }) {
   const { t, language } = useLanguage()
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
   const webcamRef = useRef(null)
   const { withLoading, isLoading } = useLoadingState()
   const { refreshUserSession, refreshUser } = useAuth();
-  
+
   const [selectedImage, setSelectedImage] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -155,7 +155,7 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = async (e) => {
-            try {              
+            try {
               const imageData = e.target.result;
               const apiEndpoint = '/api/classify';
               const response = await fetch(apiEndpoint, {
@@ -163,7 +163,7 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                   imageData,
                   location: null
                 }),
@@ -178,8 +178,8 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                   usageCount: data.usageCount || 0,
                   requireUpgrade: data.requireUpgrade || (data.plan === 'free'),
                   upgradeUrl: data.upgradeUrl || '/payment',
-                  message: data.message || (language === 'id' 
-                    ? 'Anda telah mencapai batas klasifikasi harian.' 
+                  message: data.message || (language === 'id'
+                    ? 'Anda telah mencapai batas klasifikasi harian.'
                     : 'You have reached your daily classification limit.')
                 });
                 setShowLimitModal(true);
@@ -229,11 +229,11 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
               reject(error);
             }
           };
-          
+
           reader.onerror = (error) => {
             reject(error);
           };
-          
+
           reader.readAsDataURL(selectedFile);
         });
       });
@@ -271,19 +271,20 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
     }
     if (cameraInputRef.current) {
       cameraInputRef.current.value = ''
-    }    if (onClassificationUpdate) {
+    } if (onClassificationUpdate) {
       onClassificationUpdate(null)
     }
   }, [onClassificationUpdate])
-    return (
+  return (
     <>
-      <section className="bg-gray-50 py-16 md:py-20">
+      <section className="bg-[#fafafa] py-16 md:py-24">
         <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
           <div className="mx-auto max-w-2xl">
-            
+
             {showWebcam && (
-              <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center">
-                <div className="bg-white rounded-lg p-4 flex flex-col items-center">
+              <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] flex flex-col items-center justify-center p-4">
+                <div className="bg-white rounded-[2.5rem] p-6 w-full max-w-lg shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
                   <Webcam
                     audio={false}
                     ref={webcamRef}
@@ -291,16 +292,19 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                     videoConstraints={{
                       facingMode: "environment"
                     }}
-                    className="rounded-lg mb-4"
+                    className="rounded-[1.5rem] w-full aspect-video object-cover mb-6 shadow-md border-4 border-gray-50"
                   />
-                  <div className="flex space-x-4">                  <button
+                  <div className="flex gap-4">
+                    <button
                       onClick={captureFromWebcam}
-                      className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-6 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+                      className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white h-14 rounded-2xl font-bold transition-all duration-300 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2"
                     >
+                      <CameraIcon className="w-5 h-5" />
                       {language === "id" ? "Ambil Foto" : "Capture"}
-                    </button>                  <button
+                    </button>
+                    <button
                       onClick={cancelWebcam}
-                      className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-all duration-300"
+                      className="px-8 bg-gray-100 text-gray-700 h-14 rounded-2xl font-bold hover:bg-gray-200 transition-all duration-300"
                     >
                       {language === "id" ? "Batal" : "Cancel"}
                     </button>
@@ -310,32 +314,39 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
             )}
 
             {!classificationResult && (
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden my-10 md:my-16">
+              <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden my-10 animate-fade-in relative">
+
+                {/* Header Decoration */}
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+
                 {selectedImage && (
-                  <div className="p-6 border-b">
-                    <div className="relative">
+                  <div className="p-8 border-b border-gray-50">
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-3xl z-10"></div>
                       <img
                         src={selectedImage}
                         alt="Selected waste"
-                        className="w-full h-64 object-cover rounded-lg"
+                        className="w-full h-80 object-cover rounded-3xl"
                       />
                       <button
                         onClick={resetUpload}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                        className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-md text-gray-900 rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-all duration-300"
                       >
-                        ×
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
                     {selectedFile && (
-                      <div className="mt-2 text-sm text-gray-600 text-center">
-                        {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      <div className="mt-4 flex items-center justify-center gap-4 text-sm font-medium text-gray-400">
+                        <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+                        <div className="w-1.5 h-1.5 bg-gray-200 rounded-full"></div>
+                        <span>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
                       </div>
                     )}
                   </div>
                 )}
 
                 {!selectedImage && (
-                  <div className="relative">
+                  <div className="relative group/upload p-8">
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -353,75 +364,100 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                     />
 
                     <div
-                      className="p-8 border-2 border-dashed border-gray-300 rounded-lg m-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                      className={`
+                        min-h-[300px] flex flex-col items-center justify-center p-10 
+                        border-2 border-dashed rounded-[2.5rem] transition-all duration-500
+                        cursor-pointer overflow-hidden relative
+                        ${isDragOver
+                          ? 'border-emerald-500 bg-emerald-50/50 scale-[0.98]'
+                          : 'border-gray-200 bg-gray-50/30 hover:border-emerald-300 hover:bg-emerald-50/20'}
+                      `}
                       onDrop={handleDrop}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onClick={showUploadOptions}
                     >
-                      <div className="space-y-4">
-                        <div className="flex justify-center space-x-3">
-                          <Upload className="w-8 h-8 text-gray-400" />
-                          <Camera className="w-8 h-8 text-gray-400" />
+                      {/* Decorative elements */}
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-100/20 blur-2xl rounded-full translate-x-12 -translate-y-12"></div>
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-teal-100/20 blur-2xl rounded-full -translate-x-12 translate-y-12"></div>
+
+                      <div className="relative z-10 flex flex-col items-center">
+                        <div className="mb-8 p-6 bg-white rounded-3xl shadow-xl shadow-emerald-500/10 group-hover/upload:scale-110 group-hover/upload:rotate-3 transition-transform duration-500">
+                          <div className="flex gap-4">
+                            <Upload className="w-8 h-8 text-emerald-500" />
+                            <Camera className="w-8 h-8 text-teal-500" />
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-lg font-medium text-gray-900">
-                            {language === "id" ? "Unggah atau foto gambar sampah" : "Upload or capture waste image"}
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-gray-900 mb-3">
+                            {language === "id" ? "Klasifikasi Sekarang" : "Classify Now"}
                           </p>
-                          <p className="text-sm text-gray-500 mt-2">
-                            {language === "id" 
-                              ? "Pilih dari galeri, ambil foto, atau seret file | PNG, JPG, GIF hingga 10MB" 
-                              : "Choose from gallery, take photo, or drag file | PNG, JPG, GIF up to 10MB"}
+                          <p className="text-gray-500 font-medium max-w-[280px] leading-relaxed">
+                            {language === "id"
+                              ? "Unggah galeri, ambil foto, atau seret file gambar di sini"
+                              : "Upload from gallery, capture photo, or drag image here"}
                           </p>
+                        </div>
+                        <div className="mt-8 flex items-center gap-3 py-2 px-5 bg-white rounded-full text-xs font-bold text-gray-400 shadow-sm border border-gray-100">
+                          <span className="text-emerald-500">PNG</span>
+                          <span>JPG</span>
+                          <span>GIF</span>
+                          <span className="text-gray-200">|</span>
+                          <span>MAX 10MB</span>
                         </div>
                       </div>
                     </div>
 
                     {showOptions && (
-                      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto">
-                          <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
-                            <div className="p-4 border-b">
-                              <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                  {language === "id" ? "Pilih Sumber Gambar" : "Choose Image Source"}
-                                </h3>
-                                <button
-                                  onClick={() => setShowOptions(false)}
-                                  className="text-gray-400 hover:text-gray-600"
-                                >
-                                  <X className="w-5 h-5" />
-                                </button>
+                      <div className="absolute inset-0 z-50 flex items-center justify-center p-8">
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-md animate-fade-in" onClick={() => setShowOptions(false)}></div>
+                        <div className="relative w-full max-w-sm bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 animate-slide-up">
+                          <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                            <h3 className="font-bold text-gray-900">
+                              {language === "id" ? "Pilih Sumber Gambar" : "Choose Source"}
+                            </h3>
+                            <button onClick={() => setShowOptions(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                              <X className="w-5 h-5 text-gray-400" />
+                            </button>
+                          </div>
+                          <div className="p-6 space-y-4">
+                            <button
+                              onClick={openCamera}
+                              className="group w-full flex items-center gap-5 p-5 rounded-3xl bg-emerald-50 hover:bg-emerald-100 transition-all border border-emerald-100/50 hover:border-emerald-200 text-left"
+                            >
+                              <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform duration-500 shrink-0">
+                                <CameraIcon className="w-8 h-8 text-white" />
                               </div>
-                            </div>
-                            <div className="p-4 space-y-3">
-                              <button
-                                onClick={openCamera}
-                                className="w-full flex items-center space-x-3 p-3 text-left bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all duration-300 border border-emerald-200 hover:border-emerald-300"
-                              >                              <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                                <CameraIcon className="w-5 h-5 text-white" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
+                              <div className="flex-1">
+                                <h4 className="font-black text-emerald-900 text-lg mb-1 leading-none">
                                   {language === "id" ? "Ambil Foto" : "Take Photo"}
+                                </h4>
+                                <p className="text-emerald-700/60 text-xs font-bold leading-tight">
+                                  {language === "id" ? "Gunakan kamera untuk foto langsung" : "Use camera for instant capture"}
                                 </p>
-                                <p className="text-sm text-gray-600">
-                                  {language === "id" ? "Gunakan kamera untuk foto langsung" : "Use camera to capture directly"}
-                                </p>
+                              </div>
+                              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-xl font-black">→</span>
                               </div>
                             </button>
+
                             <button
                               onClick={openGallery}
-                              className="w-full flex items-center space-x-3 p-3 text-left bg-teal-50 hover:bg-teal-100 rounded-lg transition-all duration-300 border border-teal-200 hover:border-teal-300"
-                            >                              <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
-                                <Image className="w-5 h-5 text-white" />
+                              className="group w-full flex items-center gap-5 p-5 rounded-3xl bg-teal-50 hover:bg-teal-100 transition-all border border-teal-100/50 hover:border-teal-200 text-left"
+                            >
+                              <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-110 transition-transform duration-500 shrink-0">
+                                <Image className="w-8 h-8 text-white" />
                               </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {language === "id" ? "Pilih dari Galeri" : "Choose from Gallery"}
+                              <div className="flex-1">
+                                <h4 className="font-black text-teal-900 text-lg mb-1 leading-none">
+                                  {language === "id" ? "Pilih dari Galeri" : "Choose Gallery"}
+                                </h4>
+                                <p className="text-teal-700/60 text-xs font-bold leading-tight">
+                                  {language === "id" ? "Pilih foto dari penyimpanan" : "Select image from your device"}
                                 </p>
-                                <p className="text-sm text-gray-600">
-                                  {language === "id" ? "Pilih gambar dari perangkat Anda" : "Choose an image from your device"}
-                                </p>
+                              </div>
+                              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-xl font-black">→</span>
                               </div>
                             </button>
                           </div>
@@ -432,53 +468,79 @@ export function ClassifyUploadSection({ initialClassificationData, onClassificat
                 )}
 
                 {error && (
-                  <div className="mx-6 mb-4 bg-red-50 border border-red-200 rounded-xl p-4">
-                    <p className="text-red-800 text-sm font-medium">{error}</p>
+                  <div className="px-8 pb-8">
+                    <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      <p className="text-red-700 text-sm font-bold">{error}</p>
+                    </div>
                   </div>
-                )}              
+                )}
+
                 {selectedImage && (
-                  <div className="p-6 bg-gray-50 border-t">
-                    
-                    {isLoading ? (
-                      <div className="flex items-center justify-center space-x-2 py-2">
-                        <Loader2 className="w-5 h-5 animate-spin text-green-600" />
-                        <span className="text-green-700">
-                          {language === "id" ? "Menganalisis dengan AI..." : "Analyzing with AI..."}
-                        </span>
-                      </div>
-                    ) : (                    <button
-                        onClick={classifyWaste}
-                        className="w-full px-6 py-3 rounded-lg transition-all duration-300 font-medium bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transform hover:scale-105 shadow-lg"
-                      >
-                        {language === "id" ? "Klasifikasi dengan AI" : "Classify with AI"}
-                      </button>
-                    )}
+                  <div className="p-8 pt-0">
+                    <button
+                      onClick={classifyWaste}
+                      disabled={isLoading}
+                      className={`
+                        w-full h-16 rounded-2xl font-extrabold text-lg tracking-wide
+                        transition-all duration-300 shadow-xl
+                        flex items-center justify-center gap-3
+                        ${isLoading
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transform hover:scale-[1.02] active:scale-[0.98] shadow-emerald-500/25'}
+                      `}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                          {language === "id" ? "MENGANALISIS..." : "ANALYZING..."}
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="w-6 h-6" />
+                          {language === "id" ? "KLASIFIKASI DENGAN AI" : "CLASSIFY WITH AI"}
+                        </>
+                      )}
+                    </button>
                   </div>
                 )}
               </div>
             )}
 
             {classificationResult && (
-              <div className="space-y-6">
+              <div className="space-y-8 my-10 animate-fade-in">
                 {selectedImage && (
-                  <div className="relative rounded-lg overflow-hidden">
+                  <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl group border-[6px] border-white">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     <img
                       src={selectedImage}
-                      alt="Classified waste image"
-                      className="w-full h-64 object-cover rounded-lg"
+                      alt="Classified waste"
+                      className="w-full h-80 object-cover transform transition-transform duration-700 group-hover:scale-110"
                     />
+                    <div className="absolute top-6 right-6 z-20">
+                      <button
+                        onClick={resetUpload}
+                        className="bg-white/90 backdrop-blur-md text-gray-900 rounded-2xl p-4 shadow-xl hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-2 font-bold text-sm"
+                      >
+                        <RefreshCcw className="w-4 h-4" />
+                        New Analysis
+                      </button>
+                    </div>
                   </div>
                 )}
-                <ClassificationResultCard
-                  result={classificationResult}
-                  language={language}
-                  onClassifyAgain={resetUpload}
-                />
-              </div>          )}
+                <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                  <ClassificationResultCard
+                    result={classificationResult}
+                    language={language}
+                    onClassifyAgain={resetUpload}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
-      <LimitReachedModal 
+      <LimitReachedModal
         isOpen={showLimitModal}
         onClose={() => setShowLimitModal(false)}
         limitInfo={limitInfo}

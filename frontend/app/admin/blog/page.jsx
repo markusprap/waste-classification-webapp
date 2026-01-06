@@ -23,7 +23,7 @@ function BlogAdmin() {
     author: 'Tim EcoWaste',
     readTime: 5,
   });
-  
+
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +50,7 @@ function BlogAdmin() {
     'Tips & Trik',
     'Edukasi',
   ];
-  
+
   // Generate slug from title
   const generateSlug = (title) => {
     return title
@@ -64,7 +64,7 @@ function BlogAdmin() {
   // Generate excerpt from content
   const generateExcerpt = (content, maxLength = 150) => {
     if (!content) return '';
-    
+
     // Remove markdown/HTML tags if present
     const cleanText = content
       .replace(/#+\s/g, '') // Remove headings
@@ -72,22 +72,22 @@ function BlogAdmin() {
       .replace(/\*/g, '') // Remove italic
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Replace links with just text
       .replace(/<[^>]+>/g, ''); // Remove HTML tags
-      
+
     // Get first paragraph or first n characters
     const firstParagraph = cleanText.split('\n\n')[0];
-    
+
     if (firstParagraph.length <= maxLength) {
       return firstParagraph;
     }
-    
+
     // Truncate to max length and add ellipsis
     return firstParagraph.substring(0, maxLength).trim() + '...';
   };
-  
+
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Handle special cases before updating form data
     if (name === 'coverImage' && value.includes('unsplash.com/photos/')) {
       // Convert Unsplash URL to CDN format
@@ -102,13 +102,13 @@ function BlogAdmin() {
     if (name === 'title') {
       setFormData(prev => ({ ...prev, slug: generateSlug(value) }));
     }
-    
+
     // Auto-generate excerpt when content changes
     if (name === 'content') {
       setFormData(prev => ({ ...prev, excerpt: generateExcerpt(value) }));
     }
   };
-  
+
   // Fetch articles
   const fetchArticles = async () => {
     setLoadingArticles(true);
@@ -116,7 +116,7 @@ function BlogAdmin() {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
       const response = await fetch(`${backendUrl}/api/articles`);
       const data = await response.json();
-      
+
       if (response.ok) {
         setArticles(data.articles);
         setFilteredArticles(data.articles);
@@ -127,21 +127,21 @@ function BlogAdmin() {
       setLoadingArticles(false);
     }
   };
-  
+
   // Filter articles based on search term
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredArticles(articles);
       return;
     }
-    
+
     const lowercasedSearch = searchTerm.toLowerCase();
-    const filtered = articles.filter(article => 
+    const filtered = articles.filter(article =>
       article.title.toLowerCase().includes(lowercasedSearch) ||
       article.category.toLowerCase().includes(lowercasedSearch) ||
       (article.tags && article.tags.toLowerCase().includes(lowercasedSearch))
     );
-    
+
     setFilteredArticles(filtered);
   }, [searchTerm, articles]);
 
@@ -149,13 +149,13 @@ function BlogAdmin() {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setMessage({ text: '', type: '' });
-    
+
     try {
       if (!imageFile) {
         setMessage({
@@ -165,22 +165,22 @@ function BlogAdmin() {
         setIsSubmitting(false);
         return;
       }
-      
+
       const formDataToSend = new FormData();
-      
+
       // Append file if exists
       if (imageFile) {
         formDataToSend.append('image', imageFile);
       }
-      
+
       // Append other form data
       Object.keys(formData).forEach(key => {
         formDataToSend.append(key, formData[key]);
       });
-      
+
       // Direct connection to backend
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      
+
       const response = await fetch(`${backendUrl}/api/admin/articles`, {
         method: 'POST',
         headers: {
@@ -230,7 +230,7 @@ function BlogAdmin() {
     if (!window.confirm('Apakah Anda yakin ingin menghapus artikel ini?')) {
       return;
     }
-    
+
     setDeletingArticleId(id);
     setMessage({ text: '', type: '' });
 
@@ -280,13 +280,13 @@ function BlogAdmin() {
       alert('Kata sandi admin tidak valid!');
     }
   };
-  
+
   // Check if user is already authenticated
   useEffect(() => {
     const isAuth = localStorage.getItem('adminAuth') === 'true';
     setIsAuthenticated(isAuth);
   }, []);
-  
+
   // Handle image upload
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -312,7 +312,7 @@ function BlogAdmin() {
 
     // Store file for form submission
     setImageFile(file);
-    
+
     // Create preview
     setImagePreview(URL.createObjectURL(file));
     setMessage({
@@ -320,7 +320,7 @@ function BlogAdmin() {
       type: 'success'
     });
   };
-  
+
   // Clear image preview when unmounting
   useEffect(() => {
     return () => {
@@ -334,12 +334,12 @@ function BlogAdmin() {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Navbar />
-        
+
         <main className="flex-grow flex items-center justify-center">
           <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md">
             <div className="text-center mb-6">
               <div className="bg-gray-100 p-3 rounded-full inline-flex">
-                <LockKeyole className="w-8 h-8 text-gray-700" />
+                <LockKeyhole className="w-8 h-8 text-gray-700" />
               </div>
               <h1 className="text-2xl font-serif font-bold mt-4 text-gray-900">
                 Admin Dashboard
@@ -373,7 +373,7 @@ function BlogAdmin() {
             </form>
           </div>
         </main>
-        
+
         <Footer />
       </div>
     );
@@ -382,7 +382,7 @@ function BlogAdmin() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      
+
       {/* Header */}
       <header className="pt-24 pb-6 px-4 bg-white border-b border-gray-100">
         <div className="container mx-auto max-w-6xl">
@@ -403,13 +403,12 @@ function BlogAdmin() {
               <h2 className="text-xl font-serif font-bold mb-6 pb-2 border-b">Tambah Artikel Baru</h2>
 
               {message.text && (
-                <div className={`mb-6 p-4 rounded-lg ${
-                  message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-                }`}>
+                <div className={`mb-6 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                  }`}>
                   {message.text}
                 </div>
               )}
-              
+
               <form id="form-tambah-artikel" onSubmit={handleSubmit}>
                 {/* Title */}
                 <div className="mb-4">
@@ -468,17 +467,17 @@ function BlogAdmin() {
                     ))}
                   </select>
                 </div>
-                
+
                 {/* Cover Image Upload */}
                 <div className="mb-4">
                   <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700 mb-1">
                     Gambar Cover <span className="text-red-500">*</span>
                   </label>
-                  
+
                   {/* Image Preview */}
                   {imagePreview && (
                     <div className="relative mb-3 aspect-[16/9] rounded-lg overflow-hidden bg-gray-100">
-                      <Image 
+                      <Image
                         src={imagePreview}
                         alt="Preview"
                         fill
@@ -497,7 +496,7 @@ function BlogAdmin() {
                       </button>
                     </div>
                   )}
-                  
+
                   {/* File Input */}
                   <div className="flex items-center justify-center">
                     <label
@@ -557,7 +556,7 @@ function BlogAdmin() {
                     Ringkasan akan otomatis dibuat dari konten artikel saat Anda menulis, namun Anda dapat mengeditnya sesuai kebutuhan.
                   </p>
                 </div>
-                
+
                 {/* Tags */}
                 <div className="mb-4">
                   <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
@@ -582,7 +581,7 @@ function BlogAdmin() {
                     Waktu Baca (menit) <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="number"  
+                    type="number"
                     id="readTime"
                     name="readTime"
                     value={formData.readTime}
@@ -593,7 +592,7 @@ function BlogAdmin() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500"
                   />
                 </div>
-                
+
                 {/* Submit Button */}
                 <div className="flex justify-end">
                   <button
@@ -630,7 +629,7 @@ function BlogAdmin() {
                   Refresh
                 </button>
               </div>
-              
+
               {/* Search input */}
               <div className="mb-4">
                 <input
@@ -686,7 +685,7 @@ function BlogAdmin() {
           </div>
         </div>
       </main>
-      
+
       <Footer />
       <ScrollToTop />
     </div>
